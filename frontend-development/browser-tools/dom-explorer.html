@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DOM Explorer - Interactive Learning Tool</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #1e1e1e;
+            color: #d4d4d4;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        header {
+            background: #2d2d30;
+            padding: 1rem 2rem;
+            border-bottom: 2px solid #007acc;
+        }
+
+        h1 {
+            color: #569cd6;
+            font-size: 1.5rem;
+        }
+
+        .subtitle {
+            color: #858585;
+            font-size: 0.9rem;
+            margin-top: 0.25rem;
+        }
+
+        main {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        .panel {
+            display: flex;
+            flex-direction: column;
+            border-right: 1px solid #3e3e42;
+            background: #252526;
+        }
+
+        .panel-header {
+            background: #2d2d30;
+            padding: 0.75rem 1rem;
+            font-weight: 600;
+            border-bottom: 1px solid #3e3e42;
+            color: #cccccc;
+        }
+
+        .panel-content {
+            flex: 1;
+            overflow: auto;
+            padding: 1rem;
+        }
+
+        #tree-panel {
+            width: 35%;
+        }
+
+        #center-panel {
+            width: 35%;
+            display: flex;
+            flex-direction: column;
+        }
+
+        #right-panel {
+            flex: 1;
+        }
+
+        .dom-tree {
+            font-family: 'Consolas', 'Courier New', monospace;
+            font-size: 0.9rem;
+        }
+
+        .tree-node {
+            padding: 0.25rem 0;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .tree-node:hover {
+            background: #2a2d2e;
+        }
+
+        .tree-node.selected {
+            background: #094771;
+            color: #ffffff;
+        }
+
+        .tree-toggle {
+            display: inline-block;
+            width: 16px;
+            text-align: center;
+            color: #858585;
+        }
+
+        .tree-tag {
+            color: #569cd6;
+        }
+
+        .tree-id {
+            color: #9cdcfe;
+        }
+
+        .tree-class {
+            color: #4ec9b0;
+        }
+
+        .tree-text {
+            color: #ce9178;
+        }
+
+        .tree-children {
+            padding-left: 1.5rem;
+        }
+
+        #editor {
+            width: 100%;
+            height: 200px;
+            background: #1e1e1e;
+            border: 1px solid #3e3e42;
+            color: #d4d4d4;
+            font-family: 'Consolas', 'Courier New', monospace;
+            font-size: 0.9rem;
+            padding: 1rem;
+            resize: vertical;
+            outline: none;
+        }
+
+        button {
+            background: #0e639c;
+            color: #ffffff;
+            border: none;
+            padding: 0.5rem 1.5rem;
+            cursor: pointer;
+            font-size: 0.9rem;
+            border-radius: 2px;
+            margin-top: 0.5rem;
+        }
+
+        button:hover {
+            background: #1177bb;
+        }
+
+        button:active {
+            background: #0d5a8f;
+        }
+
+        .info-group {
+            margin-bottom: 1rem;
+        }
+
+        .info-label {
+            color: #858585;
+            font-size: 0.85rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .info-value {
+            background: #1e1e1e;
+            padding: 0.5rem;
+            border-radius: 2px;
+            font-family: 'Consolas', 'Courier New', monospace;
+            font-size: 0.85rem;
+            word-break: break-all;
+        }
+
+        #preview {
+            background: #ffffff;
+            border: 2px solid #3e3e42;
+            border-radius: 4px;
+            padding: 1rem;
+            min-height: 200px;
+        }
+
+        #preview * {
+            color: #000000;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            background: #3c3c3c;
+            border: 1px solid #3e3e42;
+            color: #d4d4d4;
+            padding: 0.5rem;
+            font-family: 'Consolas', 'Courier New', monospace;
+            font-size: 0.9rem;
+            outline: none;
+        }
+
+        input[type="text"]:focus {
+            border-color: #007acc;
+        }
+
+        .selector-result {
+            margin-top: 0.5rem;
+            padding: 0.5rem;
+            background: #1e1e1e;
+            border-radius: 2px;
+            font-family: 'Consolas', 'Courier New', monospace;
+            font-size: 0.85rem;
+        }
+
+        .event-demo {
+            margin-bottom: 1rem;
+        }
+
+        .event-button {
+            width: 100%;
+            margin-bottom: 0.5rem;
+        }
+
+        .event-log {
+            background: #1e1e1e;
+            border: 1px solid #3e3e42;
+            padding: 0.75rem;
+            max-height: 150px;
+            overflow-y: auto;
+            font-family: 'Consolas', 'Courier New', monospace;
+            font-size: 0.8rem;
+        }
+
+        .event-entry {
+            padding: 0.25rem 0;
+            border-bottom: 1px solid #2d2d30;
+        }
+
+        .event-type {
+            color: #4ec9b0;
+        }
+
+        .event-target {
+            color: #9cdcfe;
+        }
+
+        .tabs {
+            display: flex;
+            background: #2d2d30;
+            border-bottom: 1px solid #3e3e42;
+        }
+
+        .tab {
+            padding: 0.75rem 1.5rem;
+            cursor: pointer;
+            color: #858585;
+            border-bottom: 2px solid transparent;
+        }
+
+        .tab:hover {
+            color: #cccccc;
+        }
+
+        .tab.active {
+            color: #ffffff;
+            border-bottom-color: #007acc;
+        }
+
+        .tab-content {
+            display: none;
+            flex: 1;
+            overflow: auto;
+            padding: 1rem;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .help-text {
+            color: #858585;
+            font-size: 0.85rem;
+            margin-bottom: 1rem;
+            line-height: 1.5;
+        }
+
+        code {
+            background: #1e1e1e;
+            padding: 0.2rem 0.4rem;
+            border-radius: 2px;
+            font-family: 'Consolas', 'Courier New', monospace;
+            color: #ce9178;
+        }
+
+        .highlight-flash {
+            animation: flash 0.5s;
+        }
+
+        @keyframes flash {
+            0%, 100% { background: #094771; }
+            50% { background: #0e639c; }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>🌲 DOM Explorer</h1>
+        <p class="subtitle">Interactive tool for understanding the Document Object Model</p>
+    </header>
+
+    <main>
+        <div class="panel" id="tree-panel">
+            <div class="panel-header">DOM Tree View</div>
+            <div class="panel-content">
+                <div class="dom-tree" id="dom-tree"></div>
+            </div>
+        </div>
+
+        <div class="panel" id="center-panel">
+            <div class="tabs">
+                <div class="tab active" data-tab="preview">Preview</div>
+                <div class="tab" data-tab="editor">Live Editor</div>
+                <div class="tab" data-tab="selector">CSS Selector</div>
+            </div>
+            
+            <div class="tab-content active" id="preview-tab">
+                <p class="help-text">This is the rendered HTML. Click elements in the tree to inspect them.</p>
+                <div id="preview">
+                    <h2 id="main-title">Welcome to DOM Explorer!</h2>
+                    <p class="intro-text">The DOM is a <strong>tree structure</strong> representing your HTML.</p>
+                    <div id="container" class="container-box">
+                        <ul id="feature-list">
+                            <li class="feature">Inspect elements</li>
+                            <li class="feature">Manipulate with JavaScript</li>
+                            <li class="feature">Test CSS selectors</li>
+                        </ul>
+                    </div>
+                    <button id="demo-button" class="demo-btn">Click Me!</button>
+                </div>
+            </div>
+
+            <div class="tab-content" id="editor-tab">
+                <p class="help-text">Write JavaScript to manipulate the DOM. Try: <code>document.getElementById('main-title').textContent = 'Hello!'</code></p>
+                <textarea id="editor" placeholder="// Write JavaScript here...&#10;// Example: document.getElementById('main-title').style.color = 'red';"></textarea>
+                <button id="run-code">▶ Run Code</button>
+            </div>
+
+            <div class="tab-content" id="selector-tab">
+                <p class="help-text">Test CSS selectors. Examples: <code>#main-title</code>, <code>.feature</code>, <code>ul > li</code></p>
+                <input type="text" id="selector-input" placeholder="Enter CSS selector (e.g., .feature)">
+                <div class="selector-result" id="selector-result"></div>
+            </div>
+        </div>
+
+        <div class="panel" id="right-panel">
+            <div class="tabs">
+                <div class="tab active" data-tab="inspector">Inspector</div>
+                <div class="tab" data-tab="events">Events</div>
+            </div>
+
+            <div class="tab-content active" id="inspector-tab">
+                <div id="inspector">
+                    <p class="help-text">Select an element from the tree to see its properties.</p>
+                </div>
+            </div>
+
+            <div class="tab-content" id="events-tab">
+                <div class="event-demo">
+                    <p class="help-text">Events are actions that happen in the browser. Click these buttons to see events in action.</p>
+                    <button class="event-button" data-event="click">Fire Click Event</button>
+                    <button class="event-button" data-event="mouseover">Fire Mouseover Event</button>
+                    <button class="event-button" data-event="custom">Fire Custom Event</button>
+                </div>
+                <div class="info-label">Event Log:</div>
+                <div class="event-log" id="event-log"></div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // State management
+        let selectedElement = null;
+        let eventLogEntries = [];
+
+        // Initialize the app
+        function init() {
+            buildDOMTree();
+            setupEventListeners();
+            initializeTabs();
+            setupEventDemo();
+            
+            // Select the preview div by default
+            const previewDiv = document.getElementById('preview');
+            selectElement(previewDiv);
+        }
+
+        // Build the DOM tree visualization
+        function buildDOMTree() {
+            const preview = document.getElementById('preview');
+            const treeContainer = document.getElementById('dom-tree');
+            treeContainer.innerHTML = '';
+            
+            const treeNode = buildTreeNode(preview, 0);
+            treeContainer.appendChild(treeNode);
+        }
+
+        function buildTreeNode(element, depth) {
+            const container = document.createElement('div');
+            
+            const nodeDiv = document.createElement('div');
+            nodeDiv.className = 'tree-node';
+            nodeDiv.style.paddingLeft = `${depth * 1.5}rem`;
+            
+            const hasChildren = element.children.length > 0;
+            const isExpanded = depth < 2; // Auto-expand first 2 levels
+            
+            // Toggle arrow
+            const toggle = document.createElement('span');
+            toggle.className = 'tree-toggle';
+            toggle.textContent = hasChildren ? (isExpanded ? '▼' : '▶') : ' ';
+            nodeDiv.appendChild(toggle);
+            
+            // Tag name
+            const tagName = document.createElement('span');
+            tagName.className = 'tree-tag';
+            tagName.textContent = `<${element.tagName.toLowerCase()}`;
+            nodeDiv.appendChild(tagName);
+            
+            // ID
+            if (element.id) {
+                const id = document.createElement('span');
+                id.className = 'tree-id';
+                id.textContent = ` id="${element.id}"`;
+                nodeDiv.appendChild(id);
+            }
+            
+            // Classes
+            if (element.className && typeof element.className === 'string') {
+                const classes = document.createElement('span');
+                classes.className = 'tree-class';
+                classes.textContent = ` class="${element.className}"`;
+                nodeDiv.appendChild(classes);
+            }
+            
+            const closingTag = document.createElement('span');
+            closingTag.className = 'tree-tag';
+            closingTag.textContent = '>';
+            nodeDiv.appendChild(closingTag);
+            
+            // Text content (truncated)
+            const textContent = Array.from(element.childNodes)
+                .filter(node => node.nodeType === Node.TEXT_NODE)
+                .map(node => node.textContent.trim())
+                .filter(text => text.length > 0)
+                .join(' ');
+            
+            if (textContent) {
+                const text = document.createElement('span');
+                text.className = 'tree-text';
+                text.textContent = ` "${textContent.substring(0, 30)}${textContent.length > 30 ? '...' : ''}"`;
+                nodeDiv.appendChild(text);
+            }
+            
+            // Store reference to the actual DOM element
+            nodeDiv.dataset.elementId = generateElementId(element);
+            
+            // Click handler
+            nodeDiv.addEventListener('click', (e) => {
+                e.stopPropagation();
+                selectElement(element);
+                
+                // Update selected state
+                document.querySelectorAll('.tree-node').forEach(n => n.classList.remove('selected'));
+                nodeDiv.classList.add('selected');
+            });
+            
+            container.appendChild(nodeDiv);
+            
+            // Children
+            if (hasChildren) {
+                const childrenContainer = document.createElement('div');
+                childrenContainer.className = 'tree-children';
+                childrenContainer.style.display = isExpanded ? 'block' : 'none';
+                
+                Array.from(element.children).forEach(child => {
+                    childrenContainer.appendChild(buildTreeNode(child, depth + 1));
+                });
+                
+                container.appendChild(childrenContainer);
+                
+                // Toggle handler
+                toggle.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const isNowExpanded = childrenContainer.style.display === 'block';
+                    childrenContainer.style.display = isNowExpanded ? 'none' : 'block';
+                    toggle.textContent = isNowExpanded ? '▶' : '▼';
+                });
+            }
+            
+            return container;
+        }
+
+        // Generate a unique ID for tracking elements
+        function generateElementId(element) {
+            if (!element._uniqueId) {
+                element._uniqueId = 'elem_' + Math.random().toString(36).substr(2, 9);
+            }
+            return element._uniqueId;
+        }
+
+        // Select and inspect an element
+        function selectElement(element) {
+            selectedElement = element;
+            
+            // Highlight in preview
+            const preview = document.getElementById('preview');
+            const allElements = preview.querySelectorAll('*');
+            allElements.forEach(el => {
+                el.style.outline = '';
+            });
+            
+            if (element !== preview) {
+                element.style.outline = '2px solid #007acc';
+            }
+            
+            // Update inspector
+            displayElementInfo(element);
+        }
+
+        // Display element information in inspector
+        function displayElementInfo(element) {
+            const inspector = document.getElementById('inspector');
+            
+            const html = `
+                <div class="info-group">
+                    <div class="info-label">Tag Name:</div>
+                    <div class="info-value">${element.tagName.toLowerCase()}</div>
+                </div>
+                <div class="info-group">
+                    <div class="info-label">ID:</div>
+                    <div class="info-value">${element.id || '(none)'}</div>
+                </div>
+                <div class="info-group">
+                    <div class="info-label">Classes:</div>
+                    <div class="info-value">${element.className || '(none)'}</div>
+                </div>
+                <div class="info-group">
+                    <div class="info-label">Text Content:</div>
+                    <div class="info-value">${element.textContent.trim().substring(0, 100) || '(none)'}</div>
+                </div>
+                <div class="info-group">
+                    <div class="info-label">Children Count:</div>
+                    <div class="info-value">${element.children.length}</div>
+                </div>
+                <div class="info-group">
+                    <div class="info-label">Parent:</div>
+                    <div class="info-value">${element.parentElement ? element.parentElement.tagName.toLowerCase() : '(none)'}</div>
+                </div>
+            `;
+            
+            inspector.innerHTML = html;
+        }
+
+        // Setup event listeners
+        function setupEventListeners() {
+            // Run code button
+            document.getElementById('run-code').addEventListener('click', () => {
+                const code = document.getElementById('editor').value;
+                try {
+                    // Create a function scope with preview as context
+                    const preview = document.getElementById('preview');
+                    const func = new Function('preview', code);
+                    func(preview);
+                    
+                    // Rebuild tree to reflect changes
+                    buildDOMTree();
+                    
+                    // Flash feedback
+                    document.getElementById('run-code').classList.add('highlight-flash');
+                    setTimeout(() => {
+                        document.getElementById('run-code').classList.remove('highlight-flash');
+                    }, 500);
+                } catch (error) {
+                    alert('Error: ' + error.message);
+                }
+            });
+            
+            // CSS selector tester
+            const selectorInput = document.getElementById('selector-input');
+            selectorInput.addEventListener('input', () => {
+                testSelector(selectorInput.value);
+            });
+        }
+
+        // Test CSS selector
+        function testSelector(selector) {
+            const result = document.getElementById('selector-result');
+            
+            if (!selector.trim()) {
+                result.innerHTML = '<span style="color: #858585;">Enter a selector to test...</span>';
+                return;
+            }
+            
+            try {
+                const preview = document.getElementById('preview');
+                const matches = preview.querySelectorAll(selector);
+                
+                if (matches.length === 0) {
+                    result.innerHTML = '<span style="color: #f48771;">No matches found</span>';
+                } else {
+                    const matchList = Array.from(matches).map(el => {
+                        return `&lt;${el.tagName.toLowerCase()}${el.id ? ` id="${el.id}"` : ''}${el.className ? ` class="${el.className}"` : ''}&gt;`;
+                    }).join('<br>');
+                    
+                    result.innerHTML = `<span style="color: #4ec9b0;">Found ${matches.length} match(es):</span><br>${matchList}`;
+                }
+                
+                // Highlight matches
+                const allElements = preview.querySelectorAll('*');
+                allElements.forEach(el => {
+                    el.style.outline = '';
+                });
+                
+                matches.forEach(el => {
+                    el.style.outline = '2px solid #4ec9b0';
+                });
+                
+            } catch (error) {
+                result.innerHTML = `<span style="color: #f48771;">Invalid selector: ${error.message}</span>`;
+            }
+        }
+
+        // Initialize tab switching
+        function initializeTabs() {
+            const tabs = document.querySelectorAll('.tab');
+            
+            tabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    const tabName = tab.dataset.tab;
+                    const parent = tab.closest('.panel');
+                    
+                    // Update tab states
+                    parent.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                    tab.classList.add('active');
+                    
+                    // Update content states
+                    parent.querySelectorAll('.tab-content').forEach(content => {
+                        content.classList.remove('active');
+                    });
+                    parent.querySelector(`#${tabName}-tab`).classList.add('active');
+                });
+            });
+        }
+
+        // Setup event demonstration
+        function setupEventDemo() {
+            const eventButtons = document.querySelectorAll('.event-button');
+            const eventLog = document.getElementById('event-log');
+            
+            eventButtons.forEach(button => {
+                const eventType = button.dataset.event;
+                
+                button.addEventListener('click', () => {
+                    if (eventType === 'custom') {
+                        const event = new CustomEvent('myCustomEvent', {
+                            detail: { message: 'This is a custom event!' }
+                        });
+                        button.dispatchEvent(event);
+                        logEvent('myCustomEvent', button, { message: 'This is a custom event!' });
+                    } else {
+                        logEvent(eventType, button);
+                    }
+                });
+                
+                if (eventType === 'mouseover') {
+                    button.addEventListener('mouseover', () => {
+                        logEvent('mouseover', button);
+                    });
+                } else if (eventType === 'click') {
+                    // Already handled above
+                }
+            });
+        }
+
+        function logEvent(eventType, target, detail = null) {
+            const timestamp = new Date().toLocaleTimeString();
+            const entry = document.createElement('div');
+            entry.className = 'event-entry';
+            
+            let detailStr = '';
+            if (detail) {
+                detailStr = ` | detail: ${JSON.stringify(detail)}`;
+            }
+            
+            entry.innerHTML = `
+                [${timestamp}] <span class="event-type">${eventType}</span> on 
+                <span class="event-target">&lt;${target.tagName.toLowerCase()}&gt;</span>${detailStr}
+            `;
+            
+            const eventLog = document.getElementById('event-log');
+            eventLog.insertBefore(entry, eventLog.firstChild);
+            
+            // Keep only last 20 entries
+            while (eventLog.children.length > 20) {
+                eventLog.removeChild(eventLog.lastChild);
+            }
+        }
+
+        // Initialize on load
+        window.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>

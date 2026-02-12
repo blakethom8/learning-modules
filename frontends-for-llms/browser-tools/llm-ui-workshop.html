@@ -1,0 +1,860 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LLM UI Workshop</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <style>
+        .split-view {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 1rem;
+            height: calc(100vh - 8rem);
+        }
+        
+        @media (max-width: 1024px) {
+            .split-view {
+                grid-template-columns: 1fr;
+                height: auto;
+            }
+        }
+        
+        .preview-iframe {
+            border: none;
+            width: 100%;
+            height: 100%;
+            background: white;
+        }
+        
+        .code-editor {
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-white p-6">
+    
+    <div x-data="workshop()">
+        <!-- Header -->
+        <div class="mb-6">
+            <h1 class="text-4xl font-bold mb-2">LLM UI Workshop</h1>
+            <p class="text-gray-400">Explore 10 pre-built examples of single-file HTML apps generated with LLMs</p>
+        </div>
+        
+        <!-- Example Gallery -->
+        <div class="mb-4">
+            <label class="block text-sm font-medium mb-2">Select Example:</label>
+            <select x-model="currentExample" @change="loadExample()" 
+                    class="bg-gray-800 border border-gray-700 rounded px-4 py-2 w-full">
+                <template x-for="(example, index) in examples" :key="index">
+                    <option :value="index" x-text="`${index + 1}. ${example.name}`"></option>
+                </template>
+            </select>
+        </div>
+        
+        <!-- Split View -->
+        <div class="split-view">
+            <!-- Prompt Panel -->
+            <div class="bg-gray-800 rounded-lg p-4 flex flex-col">
+                <div class="flex justify-between items-center mb-2">
+                    <h2 class="text-xl font-bold">Prompt</h2>
+                    <button @click="copyPrompt()" 
+                            class="bg-purple-600 px-3 py-1 rounded text-sm hover:bg-purple-700">
+                        Copy Prompt
+                    </button>
+                </div>
+                <textarea x-model="prompt" readonly
+                          class="flex-1 bg-gray-900 border border-gray-700 rounded p-3 text-sm resize-none"></textarea>
+            </div>
+            
+            <!-- Code Editor -->
+            <div class="bg-gray-800 rounded-lg p-4 flex flex-col">
+                <h2 class="text-xl font-bold mb-2">Generated Code</h2>
+                <textarea x-model="code" @input="updatePreview()" 
+                          class="flex-1 bg-gray-900 border border-gray-700 rounded p-3 code-editor resize-none"></textarea>
+            </div>
+            
+            <!-- Preview Panel -->
+            <div class="bg-gray-800 rounded-lg p-4 flex flex-col">
+                <h2 class="text-xl font-bold mb-2">Live Preview</h2>
+                <iframe x-ref="preview" class="preview-iframe flex-1 rounded"></iframe>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        function workshop() {
+            return {
+                currentExample: 0,
+                prompt: '',
+                code: '',
+                examples: [
+                    {
+                        name: 'Dashboard with Metric Cards',
+                        prompt: `Create a single-file HTML dashboard with:
+- 4 metric cards showing: Revenue ($52,340), Users (3,421), Conversion (4.2%), Churn (1.8%)
+- Each card: label, large value, trend indicator (↑/↓)
+- Grid layout: 4 columns on desktop, 2 on tablet, 1 on mobile
+- Dark theme, Tailwind CSS
+- Modern card design with shadow and hover effect`,
+                        code: `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-900 text-white min-h-screen p-8">
+    <div class="max-w-6xl mx-auto">
+        <h1 class="text-4xl font-bold mb-8">Dashboard</h1>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div class="bg-gray-800 rounded-lg p-6 shadow-lg hover:shadow-xl transition">
+                <div class="text-gray-400 text-sm uppercase mb-2">Revenue</div>
+                <div class="text-3xl font-bold">$52,340</div>
+                <div class="text-green-500 text-sm mt-2">↑ 12% from last month</div>
+            </div>
+            
+            <div class="bg-gray-800 rounded-lg p-6 shadow-lg hover:shadow-xl transition">
+                <div class="text-gray-400 text-sm uppercase mb-2">Users</div>
+                <div class="text-3xl font-bold">3,421</div>
+                <div class="text-green-500 text-sm mt-2">↑ 8% from last month</div>
+            </div>
+            
+            <div class="bg-gray-800 rounded-lg p-6 shadow-lg hover:shadow-xl transition">
+                <div class="text-gray-400 text-sm uppercase mb-2">Conversion</div>
+                <div class="text-3xl font-bold">4.2%</div>
+                <div class="text-green-500 text-sm mt-2">↑ 2% from last month</div>
+            </div>
+            
+            <div class="bg-gray-800 rounded-lg p-6 shadow-lg hover:shadow-xl transition">
+                <div class="text-gray-400 text-sm uppercase mb-2">Churn</div>
+                <div class="text-3xl font-bold">1.8%</div>
+                <div class="text-red-500 text-sm mt-2">↓ 0.5% from last month</div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>`
+                    },
+                    {
+                        name: 'Data Table with Search/Sort',
+                        prompt: `Create a data table with:
+- Sample user data: name, email, role, status
+- Search box at top to filter rows
+- Click column headers to sort
+- Striped rows, hover highlight
+- Dark theme, Tailwind CSS
+- Use Alpine.js for interactivity`,
+                        code: `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Data Table</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+</head>
+<body class="bg-gray-900 text-white min-h-screen p-8">
+    <div x-data="{
+        search: '',
+        sortBy: 'name',
+        sortDesc: false,
+        users: [
+            { name: 'John Doe', email: 'john@example.com', role: 'Admin', status: 'Active' },
+            { name: 'Jane Smith', email: 'jane@example.com', role: 'User', status: 'Active' },
+            { name: 'Bob Johnson', email: 'bob@example.com', role: 'User', status: 'Inactive' },
+            { name: 'Alice Williams', email: 'alice@example.com', role: 'Manager', status: 'Active' }
+        ],
+        get filteredUsers() {
+            let filtered = this.users.filter(u => 
+                u.name.toLowerCase().includes(this.search.toLowerCase()) ||
+                u.email.toLowerCase().includes(this.search.toLowerCase())
+            );
+            return filtered.sort((a, b) => {
+                let result = a[this.sortBy] > b[this.sortBy] ? 1 : -1;
+                return this.sortDesc ? -result : result;
+            });
+        },
+        sort(field) {
+            if (this.sortBy === field) {
+                this.sortDesc = !this.sortDesc;
+            } else {
+                this.sortBy = field;
+                this.sortDesc = false;
+            }
+        }
+    }" class="max-w-6xl mx-auto">
+        <h1 class="text-4xl font-bold mb-8">Users</h1>
+        
+        <input x-model="search" type="text" placeholder="Search users..." 
+               class="w-full bg-gray-800 border border-gray-700 rounded px-4 py-2 mb-4">
+        
+        <div class="bg-gray-800 rounded-lg overflow-hidden">
+            <table class="w-full">
+                <thead class="bg-gray-700">
+                    <tr>
+                        <th @click="sort('name')" class="px-6 py-3 text-left cursor-pointer hover:bg-gray-600">Name</th>
+                        <th @click="sort('email')" class="px-6 py-3 text-left cursor-pointer hover:bg-gray-600">Email</th>
+                        <th @click="sort('role')" class="px-6 py-3 text-left cursor-pointer hover:bg-gray-600">Role</th>
+                        <th @click="sort('status')" class="px-6 py-3 text-left cursor-pointer hover:bg-gray-600">Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <template x-for="(user, index) in filteredUsers" :key="index">
+                        <tr :class="index % 2 === 0 ? 'bg-gray-850' : 'bg-gray-800'" 
+                            class="hover:bg-gray-700">
+                            <td class="px-6 py-4" x-text="user.name"></td>
+                            <td class="px-6 py-4 text-gray-400" x-text="user.email"></td>
+                            <td class="px-6 py-4" x-text="user.role"></td>
+                            <td class="px-6 py-4">
+                                <span :class="user.status === 'Active' ? 'text-green-500' : 'text-red-500'" 
+                                      x-text="user.status"></span>
+                            </td>
+                        </tr>
+                    </template>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</body>
+</html>`
+                    },
+                    {
+                        name: 'Kanban Board',
+                        prompt: `Create a kanban board with:
+- 3 columns: To Do, In Progress, Done
+- Sample task cards in each column
+- Each card: title, assignee, priority badge
+- Draggable cards (visual only, no real drag-drop)
+- Dark theme, Tailwind CSS`,
+                        code: `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kanban Board</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-900 text-white min-h-screen p-8">
+    <div class="max-w-7xl mx-auto">
+        <h1 class="text-4xl font-bold mb-8">Project Board</h1>
+        
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="bg-gray-800 rounded-lg p-4">
+                <h2 class="text-xl font-bold mb-4 text-blue-400">To Do</h2>
+                <div class="space-y-3">
+                    <div class="bg-gray-700 rounded p-4 cursor-move hover:shadow-lg transition">
+                        <h3 class="font-bold mb-2">Design landing page</h3>
+                        <div class="flex items-center justify-between text-sm">
+                            <span class="text-gray-400">Sarah J.</span>
+                            <span class="bg-red-600 px-2 py-1 rounded text-xs">High</span>
+                        </div>
+                    </div>
+                    <div class="bg-gray-700 rounded p-4 cursor-move hover:shadow-lg transition">
+                        <h3 class="font-bold mb-2">Write documentation</h3>
+                        <div class="flex items-center justify-between text-sm">
+                            <span class="text-gray-400">Mike R.</span>
+                            <span class="bg-yellow-600 px-2 py-1 rounded text-xs">Medium</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-gray-800 rounded-lg p-4">
+                <h2 class="text-xl font-bold mb-4 text-yellow-400">In Progress</h2>
+                <div class="space-y-3">
+                    <div class="bg-gray-700 rounded p-4 cursor-move hover:shadow-lg transition">
+                        <h3 class="font-bold mb-2">Implement auth flow</h3>
+                        <div class="flex items-center justify-between text-sm">
+                            <span class="text-gray-400">John D.</span>
+                            <span class="bg-red-600 px-2 py-1 rounded text-xs">High</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-gray-800 rounded-lg p-4">
+                <h2 class="text-xl font-bold mb-4 text-green-400">Done</h2>
+                <div class="space-y-3">
+                    <div class="bg-gray-700 rounded p-4 opacity-75">
+                        <h3 class="font-bold mb-2">Setup project</h3>
+                        <div class="flex items-center justify-between text-sm">
+                            <span class="text-gray-400">Alice W.</span>
+                            <span class="bg-green-600 px-2 py-1 rounded text-xs">Low</span>
+                        </div>
+                    </div>
+                    <div class="bg-gray-700 rounded p-4 opacity-75">
+                        <h3 class="font-bold mb-2">Initial design mockups</h3>
+                        <div class="flex items-center justify-between text-sm">
+                            <span class="text-gray-400">Sarah J.</span>
+                            <span class="bg-yellow-600 px-2 py-1 rounded text-xs">Medium</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>`
+                    },
+                    {
+                        name: 'Chart Dashboard',
+                        prompt: `Create a chart dashboard with:
+- Line chart showing revenue over 6 months
+- Bar chart showing user growth
+- Use Chart.js via CDN
+- Dark theme colors
+- Tailwind CSS for layout`,
+                        code: `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Charts</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="bg-gray-900 text-white min-h-screen p-8">
+    <div class="max-w-6xl mx-auto">
+        <h1 class="text-4xl font-bold mb-8">Analytics</h1>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="bg-gray-800 rounded-lg p-6">
+                <h2 class="text-xl font-bold mb-4">Revenue Over Time</h2>
+                <canvas id="revenueChart"></canvas>
+            </div>
+            
+            <div class="bg-gray-800 rounded-lg p-6">
+                <h2 class="text-xl font-bold mb-4">User Growth</h2>
+                <canvas id="userChart"></canvas>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        Chart.defaults.color = '#9ca3af';
+        Chart.defaults.borderColor = '#374151';
+        
+        new Chart(document.getElementById('revenueChart'), {
+            type: 'line',
+            data: {
+                labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+                datasets: [{
+                    label: 'Revenue',
+                    data: [12000, 19000, 15000, 25000, 22000, 30000],
+                    borderColor: '#7c3aed',
+                    backgroundColor: 'rgba(124, 58, 237, 0.1)',
+                    tension: 0.4,
+                    fill: true
+                }]
+            },
+            options: { responsive: true, maintainAspectRatio: true }
+        });
+        
+        new Chart(document.getElementById('userChart'), {
+            type: 'bar',
+            data: {
+                labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+                datasets: [{
+                    label: 'Users',
+                    data: [450, 680, 590, 820, 910, 1050],
+                    backgroundColor: '#ec4899'
+                }]
+            },
+            options: { responsive: true, maintainAspectRatio: true }
+        });
+    </script>
+</body>
+</html>`
+                    },
+                    {
+                        name: 'Map Viewer',
+                        prompt: `Create a map viewer with:
+- Leaflet map showing San Francisco
+- 3 markers for sample locations
+- Click marker to show popup
+- Dark map tiles
+- Full height layout`,
+                        code: `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Map Viewer</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <style>
+        body { margin: 0; padding: 0; }
+        #map { height: 100vh; }
+    </style>
+</head>
+<body>
+    <div id="map"></div>
+    
+    <script>
+        const map = L.map('map').setView([37.7749, -122.4194], 12);
+        
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+            attribution: '© OpenStreetMap contributors © CARTO'
+        }).addTo(map);
+        
+        const locations = [
+            { lat: 37.7849, lng: -122.4094, name: 'Location A', info: 'Mission District' },
+            { lat: 37.7649, lng: -122.4294, name: 'Location B', info: 'Castro' },
+            { lat: 37.7949, lng: -122.3994, name: 'Location C', info: 'SoMa' }
+        ];
+        
+        locations.forEach(loc => {
+            L.marker([loc.lat, loc.lng])
+                .bindPopup(\`<b>\${loc.name}</b><br>\${loc.info}\`)
+                .addTo(map);
+        });
+    </script>
+</body>
+</html>`
+                    },
+                    {
+                        name: 'Form with Validation',
+                        prompt: `Create a login form with:
+- Email and password inputs
+- "Remember me" checkbox
+- Submit button
+- Client-side validation
+- Show error messages below fields
+- Dark theme, Tailwind CSS
+- Use Alpine.js for validation`,
+                        code: `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login Form</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+</head>
+<body class="bg-gray-900 text-white min-h-screen flex items-center justify-center p-8">
+    <div x-data="{
+        email: '',
+        password: '',
+        remember: false,
+        errors: {},
+        validate() {
+            this.errors = {};
+            if (!this.email) this.errors.email = 'Email is required';
+            else if (!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(this.email)) this.errors.email = 'Invalid email';
+            if (!this.password) this.errors.password = 'Password is required';
+            else if (this.password.length < 6) this.errors.password = 'Password must be 6+ characters';
+            return Object.keys(this.errors).length === 0;
+        },
+        submit() {
+            if (this.validate()) {
+                alert('Login successful!');
+            }
+        }
+    }" class="bg-gray-800 rounded-lg p-8 w-full max-w-md">
+        <h1 class="text-3xl font-bold mb-6">Login</h1>
+        
+        <form @submit.prevent="submit()" class="space-y-4">
+            <div>
+                <label class="block text-sm font-medium mb-2">Email</label>
+                <input x-model="email" type="email" 
+                       class="w-full bg-gray-900 border border-gray-700 rounded px-4 py-2 focus:border-purple-500 focus:outline-none">
+                <p x-show="errors.email" x-text="errors.email" class="text-red-500 text-sm mt-1"></p>
+            </div>
+            
+            <div>
+                <label class="block text-sm font-medium mb-2">Password</label>
+                <input x-model="password" type="password" 
+                       class="w-full bg-gray-900 border border-gray-700 rounded px-4 py-2 focus:border-purple-500 focus:outline-none">
+                <p x-show="errors.password" x-text="errors.password" class="text-red-500 text-sm mt-1"></p>
+            </div>
+            
+            <div class="flex items-center">
+                <input x-model="remember" type="checkbox" id="remember" class="mr-2">
+                <label for="remember" class="text-sm">Remember me</label>
+            </div>
+            
+            <button type="submit" 
+                    class="w-full bg-purple-600 hover:bg-purple-700 py-2 rounded font-medium">
+                Sign In
+            </button>
+        </form>
+    </div>
+</body>
+</html>`
+                    },
+                    {
+                        name: 'File Upload with Preview',
+                        prompt: `Create a file upload component with:
+- Drag-and-drop area
+- Click to select files
+- Image preview after upload
+- File size and name display
+- Dark theme, Tailwind CSS
+- Use Alpine.js for file handling`,
+                        code: `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>File Upload</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+</head>
+<body class="bg-gray-900 text-white min-h-screen p-8">
+    <div x-data="{
+        file: null,
+        preview: null,
+        handleFile(e) {
+            const file = e.target.files[0] || e.dataTransfer?.files[0];
+            if (file && file.type.startsWith('image/')) {
+                this.file = file;
+                const reader = new FileReader();
+                reader.onload = (e) => this.preview = e.target.result;
+                reader.readAsDataURL(file);
+            }
+        }
+    }" class="max-w-2xl mx-auto">
+        <h1 class="text-4xl font-bold mb-8">Upload Image</h1>
+        
+        <div @drop.prevent="handleFile($event)" 
+             @dragover.prevent
+             class="border-2 border-dashed border-gray-600 rounded-lg p-12 text-center cursor-pointer hover:border-purple-500 transition"
+             @click="$refs.fileInput.click()">
+            <template x-if="!preview">
+                <div>
+                    <svg class="w-16 h-16 mx-auto text-gray-500 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                    </svg>
+                    <p class="text-xl mb-2">Drag & drop an image</p>
+                    <p class="text-gray-400">or click to select</p>
+                </div>
+            </template>
+            
+            <template x-if="preview">
+                <div>
+                    <img :src="preview" class="max-w-full max-h-96 mx-auto mb-4 rounded">
+                    <p class="font-medium" x-text="file?.name"></p>
+                    <p class="text-gray-400 text-sm" x-text="(file?.size / 1024).toFixed(1) + ' KB'"></p>
+                </div>
+            </template>
+            
+            <input x-ref="fileInput" type="file" @change="handleFile($event)" 
+                   accept="image/*" class="hidden">
+        </div>
+        
+        <button x-show="preview" @click="preview = null; file = null" 
+                class="mt-4 bg-red-600 hover:bg-red-700 px-6 py-2 rounded">
+            Clear
+        </button>
+    </div>
+</body>
+</html>`
+                    },
+                    {
+                        name: 'Real-Time Log Viewer',
+                        prompt: `Create a log viewer with:
+- Scrollable log list
+- Filter by log level (info, warn, error)
+- Auto-scroll to bottom
+- Monospace font
+- Color-coded log levels
+- Dark theme, Tailwind CSS, Alpine.js`,
+                        code: `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Log Viewer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+</head>
+<body class="bg-gray-900 text-white min-h-screen p-8">
+    <div x-data="{
+        filter: 'all',
+        logs: [
+            { time: '10:32:01', level: 'info', message: 'Server started on port 3000' },
+            { time: '10:32:15', level: 'info', message: 'User login: john@example.com' },
+            { time: '10:33:42', level: 'warn', message: 'Slow query detected: 2.3s' },
+            { time: '10:34:01', level: 'error', message: 'Database connection failed' },
+            { time: '10:34:05', level: 'info', message: 'Retrying connection...' },
+            { time: '10:34:07', level: 'info', message: 'Connection restored' }
+        ],
+        get filteredLogs() {
+            return this.filter === 'all' ? this.logs : this.logs.filter(l => l.level === this.filter);
+        },
+        levelColor(level) {
+            return {
+                'info': 'text-blue-400',
+                'warn': 'text-yellow-400',
+                'error': 'text-red-400'
+            }[level];
+        }
+    }" class="max-w-6xl mx-auto">
+        <div class="flex justify-between items-center mb-6">
+            <h1 class="text-4xl font-bold">Logs</h1>
+            <div class="space-x-2">
+                <button @click="filter = 'all'" :class="filter === 'all' ? 'bg-purple-600' : 'bg-gray-700'" 
+                        class="px-4 py-2 rounded">All</button>
+                <button @click="filter = 'info'" :class="filter === 'info' ? 'bg-purple-600' : 'bg-gray-700'" 
+                        class="px-4 py-2 rounded">Info</button>
+                <button @click="filter = 'warn'" :class="filter === 'warn' ? 'bg-purple-600' : 'bg-gray-700'" 
+                        class="px-4 py-2 rounded">Warn</button>
+                <button @click="filter = 'error'" :class="filter === 'error' ? 'bg-purple-600' : 'bg-gray-700'" 
+                        class="px-4 py-2 rounded">Error</button>
+            </div>
+        </div>
+        
+        <div class="bg-gray-800 rounded-lg p-4 font-mono text-sm max-h-96 overflow-y-auto">
+            <template x-for="log in filteredLogs" :key="log.time">
+                <div class="mb-1">
+                    <span class="text-gray-500" x-text="log.time"></span>
+                    <span :class="levelColor(log.level)" x-text="'[' + log.level.toUpperCase() + ']'" class="font-bold mx-2"></span>
+                    <span x-text="log.message"></span>
+                </div>
+            </template>
+        </div>
+    </div>
+</body>
+</html>`
+                    },
+                    {
+                        name: 'API Explorer',
+                        prompt: `Create an API testing tool like Postman-lite with:
+- URL input
+- Method dropdown (GET/POST/PUT/DELETE)
+- Headers editor (key-value pairs)
+- Body editor (JSON)
+- Send button
+- Response viewer
+- Dark theme, Tailwind CSS, Alpine.js`,
+                        code: `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Explorer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+</head>
+<body class="bg-gray-900 text-white min-h-screen p-8">
+    <div x-data="{
+        method: 'GET',
+        url: 'https://jsonplaceholder.typicode.com/users',
+        headers: 'Content-Type: application/json',
+        body: '',
+        response: null,
+        loading: false,
+        async send() {
+            this.loading = true;
+            this.response = null;
+            try {
+                const headers = {};
+                this.headers.split('\\n').forEach(line => {
+                    const [key, value] = line.split(':').map(s => s.trim());
+                    if (key && value) headers[key] = value;
+                });
+                
+                const options = { method: this.method, headers };
+                if (this.method !== 'GET' && this.body) {
+                    options.body = this.body;
+                }
+                
+                const res = await fetch(this.url, options);
+                this.response = {
+                    status: res.status,
+                    body: await res.json()
+                };
+            } catch (err) {
+                this.response = { error: err.message };
+            } finally {
+                this.loading = false;
+            }
+        }
+    }" class="max-w-6xl mx-auto">
+        <h1 class="text-4xl font-bold mb-8">API Explorer</h1>
+        
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div class="space-y-4">
+                <div class="flex gap-2">
+                    <select x-model="method" class="bg-gray-800 border border-gray-700 rounded px-4 py-2">
+                        <option>GET</option>
+                        <option>POST</option>
+                        <option>PUT</option>
+                        <option>DELETE</option>
+                    </select>
+                    <input x-model="url" type="text" placeholder="https://api.example.com/endpoint" 
+                           class="flex-1 bg-gray-800 border border-gray-700 rounded px-4 py-2">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium mb-2">Headers (one per line)</label>
+                    <textarea x-model="headers" class="w-full bg-gray-800 border border-gray-700 rounded px-4 py-2 h-24 font-mono text-sm"></textarea>
+                </div>
+                
+                <div x-show="method !== 'GET'">
+                    <label class="block text-sm font-medium mb-2">Body (JSON)</label>
+                    <textarea x-model="body" class="w-full bg-gray-800 border border-gray-700 rounded px-4 py-2 h-32 font-mono text-sm"></textarea>
+                </div>
+                
+                <button @click="send()" :disabled="loading" 
+                        class="bg-purple-600 hover:bg-purple-700 disabled:bg-gray-600 px-6 py-2 rounded font-medium">
+                    <span x-show="!loading">Send Request</span>
+                    <span x-show="loading">Loading...</span>
+                </button>
+            </div>
+            
+            <div>
+                <h2 class="text-xl font-bold mb-4">Response</h2>
+                <div x-show="response" class="bg-gray-800 rounded-lg p-4">
+                    <div x-show="response?.status" class="mb-2">
+                        Status: <span :class="response.status < 400 ? 'text-green-500' : 'text-red-500'" 
+                                      x-text="response.status"></span>
+                    </div>
+                    <pre class="bg-gray-900 rounded p-4 text-sm overflow-x-auto" 
+                         x-text="JSON.stringify(response?.body || response, null, 2)"></pre>
+                </div>
+                <div x-show="!response" class="text-gray-500 text-center py-12">
+                    No response yet
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>`
+                    },
+                    {
+                        name: 'Settings Page with Tabs',
+                        prompt: `Create a settings page with:
+- Tab navigation: Profile, Security, Notifications
+- Each tab shows different form fields
+- Save button at bottom
+- Dark theme, Tailwind CSS
+- Use Alpine.js for tab switching`,
+                        code: `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Settings</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+</head>
+<body class="bg-gray-900 text-white min-h-screen p-8">
+    <div x-data="{ tab: 'profile' }" class="max-w-4xl mx-auto">
+        <h1 class="text-4xl font-bold mb-8">Settings</h1>
+        
+        <div class="flex border-b border-gray-700 mb-6">
+            <button @click="tab = 'profile'" :class="tab === 'profile' ? 'border-purple-500 text-white' : 'border-transparent text-gray-400'" 
+                    class="px-6 py-3 border-b-2 font-medium">Profile</button>
+            <button @click="tab = 'security'" :class="tab === 'security' ? 'border-purple-500 text-white' : 'border-transparent text-gray-400'" 
+                    class="px-6 py-3 border-b-2 font-medium">Security</button>
+            <button @click="tab = 'notifications'" :class="tab === 'notifications' ? 'border-purple-500 text-white' : 'border-transparent text-gray-400'" 
+                    class="px-6 py-3 border-b-2 font-medium">Notifications</button>
+        </div>
+        
+        <div class="bg-gray-800 rounded-lg p-6">
+            <div x-show="tab === 'profile'" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium mb-2">Full Name</label>
+                    <input type="text" value="John Doe" class="w-full bg-gray-900 border border-gray-700 rounded px-4 py-2">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-2">Email</label>
+                    <input type="email" value="john@example.com" class="w-full bg-gray-900 border border-gray-700 rounded px-4 py-2">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-2">Bio</label>
+                    <textarea class="w-full bg-gray-900 border border-gray-700 rounded px-4 py-2 h-24">Product designer and developer</textarea>
+                </div>
+            </div>
+            
+            <div x-show="tab === 'security'" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium mb-2">Current Password</label>
+                    <input type="password" class="w-full bg-gray-900 border border-gray-700 rounded px-4 py-2">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-2">New Password</label>
+                    <input type="password" class="w-full bg-gray-900 border border-gray-700 rounded px-4 py-2">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-2">Confirm New Password</label>
+                    <input type="password" class="w-full bg-gray-900 border border-gray-700 rounded px-4 py-2">
+                </div>
+                <div class="flex items-center">
+                    <input type="checkbox" id="2fa" class="mr-2">
+                    <label for="2fa" class="text-sm">Enable two-factor authentication</label>
+                </div>
+            </div>
+            
+            <div x-show="tab === 'notifications'" class="space-y-4">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <div class="font-medium">Email Notifications</div>
+                        <div class="text-sm text-gray-400">Receive email updates</div>
+                    </div>
+                    <input type="checkbox" checked class="w-5 h-5">
+                </div>
+                <div class="flex items-center justify-between">
+                    <div>
+                        <div class="font-medium">Push Notifications</div>
+                        <div class="text-sm text-gray-400">Receive push notifications</div>
+                    </div>
+                    <input type="checkbox" class="w-5 h-5">
+                </div>
+                <div class="flex items-center justify-between">
+                    <div>
+                        <div class="font-medium">SMS Notifications</div>
+                        <div class="text-sm text-gray-400">Receive text messages</div>
+                    </div>
+                    <input type="checkbox" checked class="w-5 h-5">
+                </div>
+            </div>
+            
+            <div class="mt-6 pt-6 border-t border-gray-700">
+                <button class="bg-purple-600 hover:bg-purple-700 px-6 py-2 rounded font-medium">
+                    Save Changes
+                </button>
+            </div>
+        </div>
+    </div>
+</body>
+</html>`
+                    }
+                ],
+                
+                init() {
+                    this.loadExample();
+                },
+                
+                loadExample() {
+                    const example = this.examples[this.currentExample];
+                    this.prompt = example.prompt;
+                    this.code = example.code;
+                    this.updatePreview();
+                },
+                
+                updatePreview() {
+                    const iframe = this.$refs.preview;
+                    iframe.srcdoc = this.code;
+                },
+                
+                copyPrompt() {
+                    navigator.clipboard.writeText(this.prompt);
+                    alert('Prompt copied to clipboard!');
+                }
+            };
+        }
+    </script>
+    
+</body>
+</html>

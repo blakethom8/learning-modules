@@ -1,0 +1,670 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>React Visualizer</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      background: #1a1a1a;
+      color: #e0e0e0;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .header {
+      background: #252525;
+      padding: 1rem 1.5rem;
+      border-bottom: 2px solid #333;
+    }
+    
+    h1 {
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: #fff;
+      margin-bottom: 0.5rem;
+    }
+    
+    .subtitle {
+      color: #999;
+      font-size: 0.875rem;
+    }
+    
+    .main-container {
+      flex: 1;
+      display: flex;
+      overflow: hidden;
+    }
+    
+    .sidebar {
+      width: 300px;
+      background: #252525;
+      border-right: 2px solid #333;
+      overflow-y: auto;
+    }
+    
+    .sidebar-section {
+      padding: 1.5rem;
+      border-bottom: 1px solid #333;
+    }
+    
+    .section-title {
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: #999;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 1rem;
+    }
+    
+    .example-btn {
+      width: 100%;
+      padding: 0.75rem;
+      margin-bottom: 0.5rem;
+      background: #333;
+      color: #fff;
+      border: 1px solid #444;
+      border-radius: 6px;
+      cursor: pointer;
+      text-align: left;
+      transition: all 0.2s;
+    }
+    
+    .example-btn:hover {
+      background: #3a3a3a;
+      border-color: #0066ff;
+    }
+    
+    .example-btn.active {
+      background: #0066ff;
+      border-color: #0066ff;
+    }
+    
+    .example-title {
+      font-weight: 600;
+      margin-bottom: 0.25rem;
+    }
+    
+    .example-description {
+      font-size: 0.75rem;
+      color: #999;
+    }
+    
+    .visualizer {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      padding: 2rem;
+      overflow: auto;
+    }
+    
+    .component-tree {
+      margin-bottom: 2rem;
+    }
+    
+    .tree-title {
+      font-size: 1rem;
+      font-weight: 600;
+      margin-bottom: 1rem;
+      color: #fff;
+    }
+    
+    .component-node {
+      margin-left: 2rem;
+      margin-bottom: 0.5rem;
+      position: relative;
+    }
+    
+    .component-node::before {
+      content: '';
+      position: absolute;
+      left: -1rem;
+      top: 0;
+      bottom: 0;
+      width: 2px;
+      background: #333;
+    }
+    
+    .component-label {
+      display: inline-block;
+      padding: 0.5rem 0.75rem;
+      background: #252525;
+      border: 1px solid #333;
+      border-radius: 6px;
+      font-family: 'SF Mono', 'Monaco', monospace;
+      font-size: 0.875rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .component-label:hover {
+      background: #2a2a2a;
+      border-color: #0066ff;
+    }
+    
+    .component-label.highlight {
+      background: #0066ff;
+      border-color: #0066ff;
+      animation: pulse 0.5s ease-in-out;
+    }
+    
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+    }
+    
+    .component-props {
+      margin-left: 1rem;
+      margin-top: 0.25rem;
+      font-size: 0.75rem;
+      color: #999;
+    }
+    
+    .state-display {
+      margin-bottom: 2rem;
+    }
+    
+    .state-item {
+      background: #252525;
+      padding: 1rem;
+      margin-bottom: 0.5rem;
+      border-radius: 6px;
+      border-left: 3px solid #0066ff;
+    }
+    
+    .state-item.changed {
+      animation: flash 0.5s;
+    }
+    
+    @keyframes flash {
+      0%, 100% { background: #252525; }
+      50% { background: #0066ff33; }
+    }
+    
+    .state-label {
+      font-size: 0.875rem;
+      color: #999;
+      margin-bottom: 0.25rem;
+    }
+    
+    .state-value {
+      font-family: 'SF Mono', 'Monaco', monospace;
+      font-size: 1rem;
+      color: #4ec9b0;
+    }
+    
+    .demo-app {
+      margin-top: 2rem;
+      padding: 2rem;
+      background: #252525;
+      border-radius: 8px;
+      border: 2px solid #333;
+    }
+    
+    .demo-app h3 {
+      margin-bottom: 1rem;
+      color: #fff;
+    }
+    
+    .demo-controls {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+    }
+    
+    button {
+      padding: 0.5rem 1rem;
+      background: #0066ff;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.875rem;
+      transition: background 0.2s;
+    }
+    
+    button:hover {
+      background: #0052cc;
+    }
+    
+    button:disabled {
+      background: #333;
+      cursor: not-allowed;
+    }
+    
+    input {
+      padding: 0.5rem;
+      background: #1e1e1e;
+      color: #fff;
+      border: 1px solid #444;
+      border-radius: 6px;
+    }
+    
+    .render-log {
+      margin-top: 2rem;
+    }
+    
+    .render-entry {
+      padding: 0.5rem 0.75rem;
+      margin-bottom: 0.25rem;
+      background: #1e1e1e;
+      border-radius: 4px;
+      font-size: 0.875rem;
+      font-family: 'SF Mono', 'Monaco', monospace;
+    }
+    
+    .render-entry .timestamp {
+      color: #666;
+      margin-right: 0.5rem;
+    }
+    
+    .render-entry .component {
+      color: #4ec9b0;
+      margin-right: 0.5rem;
+    }
+    
+    .render-entry .reason {
+      color: #dcdcaa;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>⚛️ React Visualizer</h1>
+    <div class="subtitle">See how React components render and re-render</div>
+  </div>
+  
+  <div class="main-container">
+    <div class="sidebar">
+      <div class="sidebar-section">
+        <div class="section-title">Examples</div>
+        <div id="examplesList"></div>
+      </div>
+    </div>
+    
+    <div class="visualizer">
+      <div class="component-tree">
+        <div class="tree-title">Component Tree</div>
+        <div id="componentTree"></div>
+      </div>
+      
+      <div class="state-display">
+        <div class="tree-title">State</div>
+        <div id="stateDisplay"></div>
+      </div>
+      
+      <div class="demo-app">
+        <h3>Live Demo</h3>
+        <div id="demoApp"></div>
+      </div>
+      
+      <div class="render-log">
+        <div class="tree-title">Render Log</div>
+        <div id="renderLog"></div>
+      </div>
+    </div>
+  </div>
+  
+  <script>
+    // Examples database
+    const examples = [
+      {
+        id: 'counter',
+        title: 'Simple Counter',
+        description: 'State updates trigger re-renders',
+        tree: [
+          { name: 'App', level: 0 },
+          { name: 'Counter', level: 1, props: { initial: 0 } },
+          { name: 'Button', level: 2, props: { onClick: 'increment' } },
+          { name: 'Display', level: 2, props: { count: 0 } }
+        ],
+        state: {
+          count: 0
+        },
+        actions: [
+          { label: 'Increment', fn: 'increment' },
+          { label: 'Decrement', fn: 'decrement' },
+          { label: 'Reset', fn: 'reset' }
+        ]
+      },
+      {
+        id: 'form',
+        title: 'Form Input',
+        description: 'Controlled components and state',
+        tree: [
+          { name: 'App', level: 0 },
+          { name: 'Form', level: 1 },
+          { name: 'Input', level: 2, props: { value: '', onChange: 'updateName' } },
+          { name: 'Greeting', level: 2, props: { name: '' } }
+        ],
+        state: {
+          name: ''
+        },
+        actions: [
+          { label: 'Type Name', fn: 'setName', input: true }
+        ]
+      },
+      {
+        id: 'list',
+        title: 'Todo List',
+        description: 'Array state and mapping',
+        tree: [
+          { name: 'App', level: 0 },
+          { name: 'TodoList', level: 1 },
+          { name: 'Input', level: 2, props: { value: '' } },
+          { name: 'Button', level: 2, props: { onClick: 'addTodo' } },
+          { name: 'TodoItem', level: 2, props: { todo: '...' } },
+          { name: 'TodoItem', level: 2, props: { todo: '...' } }
+        ],
+        state: {
+          todos: ['Learn React', 'Build an app'],
+          input: ''
+        },
+        actions: [
+          { label: 'Add Todo', fn: 'addTodo' },
+          { label: 'Remove First', fn: 'removeTodo' }
+        ]
+      },
+      {
+        id: 'parent-child',
+        title: 'Parent-Child Communication',
+        description: 'Props down, events up',
+        tree: [
+          { name: 'Parent', level: 0, props: { message: 'Hello' } },
+          { name: 'Child', level: 1, props: { message: 'Hello', onSend: 'handleSend' } },
+          { name: 'Button', level: 2, props: { onClick: 'sendMessage' } }
+        ],
+        state: {
+          parentMessage: 'Hello',
+          childMessage: 'Hi from child!'
+        },
+        actions: [
+          { label: 'Send Message', fn: 'sendMessage' },
+          { label: 'Change Parent', fn: 'changeParent' }
+        ]
+      },
+      {
+        id: 'conditional',
+        title: 'Conditional Rendering',
+        description: 'Components appear/disappear',
+        tree: [
+          { name: 'App', level: 0 },
+          { name: 'Toggle', level: 1 },
+          { name: 'Content', level: 2, props: { visible: true } }
+        ],
+        state: {
+          visible: true
+        },
+        actions: [
+          { label: 'Toggle', fn: 'toggle' }
+        ]
+      }
+    ]
+    
+    // State
+    let currentExample = null
+    let renderCount = 0
+    let renderHistory = []
+    
+    // Elements
+    const examplesList = document.getElementById('examplesList')
+    const componentTree = document.getElementById('componentTree')
+    const stateDisplay = document.getElementById('stateDisplay')
+    const demoApp = document.getElementById('demoApp')
+    const renderLog = document.getElementById('renderLog')
+    
+    // Initialize
+    function init() {
+      // Populate examples
+      examples.forEach(ex => {
+        const btn = document.createElement('button')
+        btn.className = 'example-btn'
+        btn.innerHTML = `
+          <div class="example-title">${ex.title}</div>
+          <div class="example-description">${ex.description}</div>
+        `
+        btn.addEventListener('click', () => loadExample(ex.id))
+        examplesList.appendChild(btn)
+      })
+      
+      // Load first example
+      loadExample(examples[0].id)
+    }
+    
+    function loadExample(id) {
+      const example = examples.find(ex => ex.id === id)
+      if (!example) return
+      
+      currentExample = example
+      renderCount = 0
+      renderHistory = []
+      
+      // Update active button
+      document.querySelectorAll('.example-btn').forEach(btn => btn.classList.remove('active'))
+      event.target.closest('.example-btn')?.classList.add('active')
+      
+      // Render tree
+      renderTree(example.tree)
+      
+      // Render state
+      renderState(example.state)
+      
+      // Render demo
+      renderDemo(example)
+      
+      // Clear log
+      renderLog.innerHTML = ''
+      
+      // Log initial render
+      logRender('App', 'initial mount')
+    }
+    
+    function renderTree(tree) {
+      componentTree.innerHTML = tree.map(node => {
+        const props = node.props ? 
+          `<div class="component-props">${JSON.stringify(node.props)}</div>` : ''
+        
+        return `
+          <div class="component-node" style="margin-left: ${node.level * 2}rem">
+            <div class="component-label">&lt;${node.name} /&gt;</div>
+            ${props}
+          </div>
+        `
+      }).join('')
+    }
+    
+    function renderState(state) {
+      stateDisplay.innerHTML = Object.entries(state).map(([key, value]) => `
+        <div class="state-item" data-key="${key}">
+          <div class="state-label">${key}</div>
+          <div class="state-value">${formatValue(value)}</div>
+        </div>
+      `).join('')
+    }
+    
+    function formatValue(value) {
+      if (Array.isArray(value)) {
+        return `[${value.map(v => JSON.stringify(v)).join(', ')}]`
+      }
+      return JSON.stringify(value)
+    }
+    
+    function renderDemo(example) {
+      demoApp.innerHTML = `
+        <div class="demo-controls">
+          ${example.actions.map(action => {
+            if (action.input) {
+              return `<input type="text" id="demo-input" placeholder="Enter value..." />`
+            }
+            return `<button onclick="executeAction('${action.fn}')">${action.label}</button>`
+          }).join('')}
+        </div>
+        <div id="demoOutput" style="margin-top: 1rem; padding: 1rem; background: #1e1e1e; border-radius: 6px;">
+          ${generateDemoOutput(example.state)}
+        </div>
+      `
+    }
+    
+    function generateDemoOutput(state) {
+      if (!currentExample) return ''
+      
+      switch (currentExample.id) {
+        case 'counter':
+          return `<div style="font-size: 2rem; text-align: center;">Count: ${state.count}</div>`
+        
+        case 'form':
+          return `<div>Greeting: ${state.name ? `Hello, ${state.name}!` : 'Enter your name above'}</div>`
+        
+        case 'list':
+          return `
+            <div>Todos:</div>
+            <ul style="margin-top: 0.5rem; padding-left: 1.5rem;">
+              ${state.todos.map(todo => `<li>${todo}</li>`).join('')}
+            </ul>
+          `
+        
+        case 'parent-child':
+          return `
+            <div style="margin-bottom: 0.5rem;">Parent: "${state.parentMessage}"</div>
+            <div>Child: "${state.childMessage}"</div>
+          `
+        
+        case 'conditional':
+          return state.visible ? 
+            '<div style="color: #4ec9b0;">✓ Content is visible</div>' :
+            '<div style="color: #666;">✗ Content is hidden</div>'
+        
+        default:
+          return JSON.stringify(state, null, 2)
+      }
+    }
+    
+    function executeAction(actionName) {
+      if (!currentExample) return
+      
+      const state = currentExample.state
+      let changed = []
+      
+      switch (actionName) {
+        case 'increment':
+          state.count++
+          changed = ['count']
+          break
+        
+        case 'decrement':
+          state.count--
+          changed = ['count']
+          break
+        
+        case 'reset':
+          state.count = 0
+          changed = ['count']
+          break
+        
+        case 'setName':
+          const input = document.getElementById('demo-input')
+          state.name = input.value
+          changed = ['name']
+          break
+        
+        case 'addTodo':
+          state.todos.push(`New todo ${state.todos.length + 1}`)
+          changed = ['todos']
+          break
+        
+        case 'removeTodo':
+          state.todos.shift()
+          changed = ['todos']
+          break
+        
+        case 'sendMessage':
+          state.parentMessage = state.childMessage
+          changed = ['parentMessage']
+          break
+        
+        case 'changeParent':
+          state.parentMessage = 'Updated from parent'
+          changed = ['parentMessage']
+          break
+        
+        case 'toggle':
+          state.visible = !state.visible
+          changed = ['visible']
+          break
+      }
+      
+      // Update displays
+      updateState(state, changed)
+      updateDemo(state)
+      
+      // Log render
+      changed.forEach(key => {
+        logRender('App', `state.${key} changed`)
+        highlightComponent('App')
+      })
+    }
+    
+    function updateState(state, changed) {
+      // Highlight changed state items
+      changed.forEach(key => {
+        const item = document.querySelector(`[data-key="${key}"]`)
+        if (item) {
+          item.classList.add('changed')
+          setTimeout(() => item.classList.remove('changed'), 500)
+        }
+      })
+      
+      // Re-render state display
+      renderState(state)
+    }
+    
+    function updateDemo(state) {
+      const output = document.getElementById('demoOutput')
+      if (output) {
+        output.innerHTML = generateDemoOutput(state)
+      }
+    }
+    
+    function highlightComponent(name) {
+      const labels = componentTree.querySelectorAll('.component-label')
+      labels.forEach(label => {
+        if (label.textContent.includes(name)) {
+          label.classList.add('highlight')
+          setTimeout(() => label.classList.remove('highlight'), 500)
+        }
+      })
+    }
+    
+    function logRender(component, reason) {
+      renderCount++
+      const timestamp = new Date().toLocaleTimeString()
+      
+      const entry = document.createElement('div')
+      entry.className = 'render-entry'
+      entry.innerHTML = `
+        <span class="timestamp">${timestamp}</span>
+        <span class="component">&lt;${component} /&gt;</span>
+        <span class="reason">${reason}</span>
+      `
+      
+      renderLog.insertBefore(entry, renderLog.firstChild)
+      
+      // Keep only last 20 entries
+      while (renderLog.children.length > 20) {
+        renderLog.removeChild(renderLog.lastChild)
+      }
+    }
+    
+    // Initialize app
+    init()
+  </script>
+</body>
+</html>

