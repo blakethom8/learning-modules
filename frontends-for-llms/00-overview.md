@@ -155,7 +155,7 @@ If you've ever thought "I just want a dashboard that shows this data" but got st
 
 ## What's Next
 
-This module has 7 more guides covering:
+This module has 8 guides covering:
 
 1. **The LLM Frontend Workflow** — The prompt-to-UI pipeline
 2. **Command-Line Frontend Tools** — Claude Code, Codex, OpenClaw, v0, Bolt
@@ -164,6 +164,7 @@ This module has 7 more guides covering:
 5. **Rapid Prototyping Patterns** — 10-minute prototypes to production
 6. **The Skills You Still Need** — What LLMs can't do (yet)
 7. **Building a Frontend CLI** — Automate your LLM frontend workflow
+8. **Web-MCP: Agent-Friendly Architecture** — Building apps that AI agents can use
 
 Plus interactive tools, bash scripts, and a Jupyter notebook exploring Python-to-frontend workflows.
 
